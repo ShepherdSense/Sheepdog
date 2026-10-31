@@ -1,0 +1,40 @@
+name: Inspect export download links
+on:
+  push:
+    paths:
+      - .github/workflows/inspect-links.yml
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download export asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/exp
+          gh release download tmp-export-holder --pattern "interactive-us-local-events-map.html" --dir /tmp/exp
+          ls -la /tmp/exp
+      - name: Inspect granted export download links
+        run: |
+          F=/tmp/exp/interactive-us-local-events-map.html
+          echo "=== export file bytes ==="
+          wc -c "$F"
+          echo "=== export hrefs containing pptx or .pdf (unique, truncated) ==="
+          grep -aoE 'href="[^"]*"' "$F" | grep -iE 'pptx|\.pdf' | cut -c1-160 | sort | uniq -c | head -40
+          echo "=== export number of href=data: occurrences ==="
+          grep -aoE 'href="data:' "$F" | wc -l
+          echo "=== export unique data: href prefixes ==="
+          grep -aoE 'href="data:[^"]{0,60}' "$F" | cut -c1-90 | sort | uniq -c | head -30
+          echo "=== export pptx mentions with context ==="
+          grep -aoiE '.{80}\.pptx.{80}' "$F" | head -20
+          echo "=== export Family guides heading context ==="
+          grep -aoiE '.{120}Family guides.{120}' "$F" | head -5
+      - name: Inspect current index.html download links
+        run: |
+          echo "=== current index.html hrefs containing pptx or .pdf (unique, truncated) ==="
+          grep -aoE 'href="[^"]*"' index.html | grep -iE 'pptx|\.pdf' | cut -c1-160 | sort | uniq -c | head -40
+          echo "=== current index.html number of href=data: occurrences ==="
+          grep -aoE 'href="data:' index.html | wc -l
