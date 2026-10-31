@@ -1,0 +1,30 @@
+name: Inspect round 2
+on:
+  push:
+    paths:
+      - .github/workflows/inspect-round2.yml
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download export asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/exp
+          gh release download tmp-export-holder --pattern "interactive-us-local-events-map.html" --dir /tmp/exp
+          ls -la /tmp/exp
+      - name: Round 2 inspection
+        run: |
+          F=/tmp/exp/interactive-us-local-events-map.html
+          echo "=== download filenames ==="
+          grep -aoiE 'download="[^"]{1,160}"' "$F" | sort | uniq -c | sort -rn | head -40
+          echo "=== download filename plus link label ==="
+          grep -aoiE 'download="[^"]{1,120}"[^<>]{0,8}>[^<>]{0,120}' "$F" | head -20
+          echo "=== octet-stream href base64 payload lengths ==="
+          grep -aoE 'href="data:application/octet-stream;base64,[A-Za-z0-9+/=]+' "$F" | awk '{ print length($0) - 43 }'
+          echo "=== slideshow context lines ==="
+          grep -aoiE '.{50}slideshow.{90}' "$F" | head -30
