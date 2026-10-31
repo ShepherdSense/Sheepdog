@@ -29,40 +29,46 @@ jobs:
           p = '/tmp/assets/interactive-us-local-events-map.html'
           src = open(p, encoding='utf-8', errors='replace').read()
           print('export chars:', len(src))
-          print('=== anchor download links (pptx/pdf) ===')
-          n = 0
-          for m in re.finditer(r'<a\b[^>]*>', src, re.I):
-              tag = m.group(0)
-              if not re.search(r'\.pptx|\.pdf', tag, re.I):
-                  continue
-              hm = re.search(r'href\s*=\s*"([^"]*)"|href\s*=\s*\'([^\']*)\'', tag, re.I)
-              href = (hm.group(1) or hm.group(2)) if hm else ''
-              after = re.sub(r'\s+', ' ', src[m.end():m.end()+160])
-              n += 1
-              if href.startswith('data:'):
-                  head, _, payload = href.partition(',')
-                  if ';base64' in head:
-                      try:
-                          dlen = len(base64.b64decode(payload))
-                      except Exception:
-                          dlen = 'DECODE-ERR'
-                      print(f'[{n}] DATA-URI mime={head[:100]} decoded_bytes={dlen} linktext={after[:120]}')
-                  else:
-                      print(f'[{n}] DATA-URI (not base64) mime={head[:100]} chars={len(payload)} linktext={after[:120]}')
+          print('=== A: every data: URI blob (mime + size) ===')
+          nblob = 0
+          for m in re.finditer(r'data:([^;,]{0,120})(;base64)?,', src):
+              mime, isb64 = m.group(1), bool(m.group(2))
+              start = m.end()
+              q = re.search(r'["\']', src[start:start+45000000])
+              if not q:
+                  print(f'mime={mime!r} base64={isb64} UNTERMINATED'); continue
+              payload = src[start:start+q.start()]
+              if isb64 and len(payload) > 200000:
+                  try: dlen = len(base64.b64decode(payload))
+                  except Exception: dlen = 'DECODE-ERR'
               else:
-                  print(f'[{n}] PATH href={href[:220]} linktext={after[:120]}')
-          print('anchor links found:', n)
-          print('=== inline data-URI blobs (pptx/pdf mimetypes anywhere) ===')
-          for mime in ['application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/pdf']:
-              for m in re.finditer('data:' + re.escape(mime) + r';base64,', src):
-                  start = m.end()
-                  q = re.search(r'["\']', src[start:start+45000000])
-                  if not q:
-                      print(mime, 'unterminated'); continue
-                  payload = src[start:start+q.start()]
-                  try:
-                      dlen = len(base64.b64decode(payload))
-                  except Exception:
-                      dlen = 'DECODE-ERR'
-                  print(f'{mime}: b64chars={len(payload)} decoded_bytes={dlen}')
+                  dlen = len(payload)
+              nblob += 1
+              print(f'mime={mime!r} base64={isb64} payload_chars={len(payload)} size={dlen}')
+          print('total data: blobs:', nblob)
+          print('=== B: anchors with download attribute ===')
+          for m in re.finditer(r'<a\\b[^>]*>', src, re.I):
+              tag = m.group(0)
+              if 'download' in tag.lower():
+                  after = re.sub(r'\\s+', ' ', src[m.end():m.end()+120])
+                  print('TAG:', tag[:280].replace(chr(10), ' '), 'TEXT:', after[:100])
+          print('=== C: href values mentioning pptx/pdf (not data:) ===')
+          for m in re.finditer(r'href\\s*=\\s*([\'"])(.{0,300}?)\\1', src, re.I | re.S):
+              v = m.group(2)
+              if re.search(r'\\.pptx|\\.pdf', v, re.I) and not v.startswith('data:'):
+                  print('PATH href:', v[:300].replace(chr(10), ' '))
+          print('=== D: JS .href assignments mentioning pptx/pdf/data ===')
+          for m in re.finditer(r'\\.href\\s*=\\s*(["\'])', src):
+              qch = m.group(1); start = m.end()
+              end = src.find(qch, start, start+400)
+              val = src[start:end if end != -1 else start+400]
+              if re.search(r'\\.pptx|\\.pdf|^data:', val, re.I):
+                  print('JS href:', val[:160].replace(chr(10), ' '))
+          print('=== E: slideshow section context (first 6 mentions) ===')
+          shown = 0
+          for m in re.finditer(r'(?i)slideshow', src):
+              if shown >= 6: break
+              shown += 1
+              s = max(0, m.start()-160); e = min(len(src), m.end()+160)
+              print('CTX:', re.sub(r'\\s+', ' ', src[s:e])[:360])
           PYEOF
