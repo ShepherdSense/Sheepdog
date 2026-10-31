@@ -1,0 +1,41 @@
+name: Swap in updated index.html
+on:
+  push:
+    paths:
+      - .github/workflows/swap-index.yml
+permissions:
+  contents: write
+jobs:
+  swap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download export asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/exp
+          gh release download tmp-export-holder --pattern "interactive-us-local-events-map.html" --dir /tmp/exp
+          ls -la /tmp/exp
+      - name: Swap export over index.html and push
+        run: |
+          SRC=/tmp/exp/interactive-us-local-events-map.html
+          SIZE=$(wc -c < "$SRC")
+          echo "export bytes: $SIZE"
+          if [ "$SIZE" -lt 40000000 ]; then echo "export too small, aborting"; exit 1; fi
+          cp "$SRC" ./index.html
+          NEWSIZE=$(wc -c < ./index.html)
+          echo "new index.html bytes: $NEWSIZE"
+          if [ "$NEWSIZE" -ne "$SIZE" ]; then echo "size mismatch, aborting"; exit 1; fi
+          echo "=== marker: emergency banner text ==="
+          grep -aoiE '.{60}emergency[^<>]{0,80}' ./index.html | head -8
+          echo "=== marker: family-friendly slideshows ==="
+          grep -aoiE '.{60}family-friendly slideshows.{60}' ./index.html | head -5
+          echo "=== marker: updates every 10 minutes ==="
+          grep -ac 'UPDATES EVERY' ./index.html || true
+          git config user.name "ShepherdSense"
+          git config user.email "shepherdsense@users.noreply.github.com"
+          git add index.html
+          git status --short
+          git commit -m "Replace index.html with updated Shep-Herd export (family-friendly slideshows)"
+          git push
