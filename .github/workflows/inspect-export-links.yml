@@ -12,7 +12,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p /tmp/assets
-          gh release download tmp-publish-r3 -D /tmp/assets
+          gh release download tmp-publish-r3 --repo ShepherdSense/Shep-Herd -D /tmp/assets
           ls -l /tmp/assets
       - name: Verify asset byte sizes
         run: |
