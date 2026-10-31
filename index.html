@@ -43,6 +43,29 @@
   .update-banner p{margin:0;font-size:16px;line-height:1.35;font-weight:600}
   .update-banner strong{font-weight:800;text-transform:uppercase;letter-spacing:.03em}
   .update-banner .mono{font-size:14px;font-weight:600}
+
+  /* ---------- emergency declaration banner (very top of page) ---------- */
+  .emergency-banner{background:#8c130c;color:#fff;border-bottom:4px solid var(--crit)}
+  .emergency-banner-in{max-width:1440px;margin:0 auto;padding:14px 16px 12px}
+  .emergency-head{display:flex;gap:10px;align-items:flex-start}
+  .emergency-ico{font-size:26px;line-height:1.1;color:#ffd166;flex:none}
+  .emergency-kicker{margin:3px 0 0;font-size:16.5px;line-height:1.35}
+  .emergency-kicker strong{text-transform:uppercase;letter-spacing:.04em;font-weight:800}
+  .emergency-top{margin-top:10px;background:rgba(0,0,0,.30);border:1.5px solid #ffb3ac;border-radius:10px;padding:11px 13px}
+  .emergency-title{margin:0;font-family:"Barlow Condensed",sans-serif;font-size:25px;line-height:1.1;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+  .emergency-meta{margin:4px 0 0;font-size:15.5px;font-weight:600}
+  .emergency-action{margin:5px 0 0;font-size:15px}
+  .emergency-links{margin:7px 0 0;font-size:15px;font-weight:700;line-height:1.7}
+  .emergency-links a{color:#ffd166}
+  .emergency-banner a{display:inline-block;padding:2px 1px;scroll-margin-top:110px}
+  .emergency-src{font-size:12px;opacity:.85;margin:6px 0 0}
+  .emergency-src a{color:#ffd166}
+  .emergency-more{margin-top:10px}
+  .emergency-more summary{cursor:pointer;font-weight:700;font-size:15.5px;padding:4px 0}
+  .emergency-more ul{margin:8px 0 0;padding-left:19px}
+  .emergency-more li{margin:0 0 11px;font-size:14.5px;line-height:1.45}
+  .emergency-more a{color:#ffd166;font-weight:700}
+  .emergency-note{margin:10px 0 0;font-size:12.5px;opacity:.9}
   .snap{font-size:12.5px;color:var(--ink2);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
   .snap b{color:var(--ink)}
   .top-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
@@ -206,6 +229,8 @@
 </head>
 <body>
 
+<div class="emergency-banner hidden" id="emergency-banner" role="alert"></div>
+
 <header class="topbar">
   <div class="topbar-in">
     <span class="live-dot" aria-hidden="true"></span>
@@ -243,7 +268,7 @@
       <h2><span class="live-dot" aria-hidden="true"></span> Live — nationwide feeds</h2>
       <button class="btn" type="button" id="btn-live-refresh">↻ Refresh live data now</button>
     </div>
-    <p>Snapshot pins <b>1–29</b> are the fixed Oct 31 board below. On top of them, your browser polls two public nationwide feeds <b>every 10 minutes</b> and pins what they return as <b>LIVE</b> pins — teal dashed outline on the map, LIVE tag on the card. Live pins are dated and source-linked like every pin here, and they update or drop off as the feeds change.</p>
+    <p>Snapshot pins <b>1–29</b> are the fixed Oct 31 board below. On top of them, your browser polls two public nationwide feeds <b>every 10 minutes</b> and pins what they return as <b>LIVE</b> pins — teal dashed outline on the map, LIVE tag on the card. Live pins are dated and source-linked like every pin here, and they update or drop off as the feeds change. The same poll also checks <b>FEMA open data</b> for emergency and major-disaster declarations — any declaration found drives the red banner at the very top of this page.</p>
     <div class="livegrid">
       <div class="livecell"><b>National Weather Service — active alerts</b><br><span id="live-nws-status">Loading the live feed…</span><br><span class="mono" id="live-nws-time"></span><br><a href="https://api.weather.gov/alerts/active" target="_blank" rel="noopener">api.weather.gov/alerts/active ↗</a></div>
       <div class="livecell"><b>USGS — earthquakes M2.5+, past day</b><br><span id="live-usgs-status">Loading the live feed…</span><br><span class="mono" id="live-usgs-time"></span><br><a href="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson" target="_blank" rel="noopener">USGS earthquake feed ↗</a></div>
@@ -395,6 +420,7 @@
       <li><b>Community</b> — Official city &amp; organizer pages for Oct 31 events, verified Oct 23–31.</li>
       <li><b>FEMA disaster declarations</b> — Checked Oct 31: FEMA-4955-DR (Florida, Hurricane Isaias, declared Oct 27; Individual Assistance for 8 counties approved Oct 29), FEMA-4948-DR (Utah, declared Oct 7), and the Oct 26 federal emergency declaration for northern New Mexico flooding. Full national declaration list: fema.gov/disasters.</li>
       <li><b>Power</b> — Utility outage feeds aggregated by MassOutage / USOutage (DOE ODIN &amp; EAGLE-I inputs).</li>
+      <li><b>Emergency declaration banner (checked every 10 min)</b> — FEMA Open Data, Disaster Declarations Summaries API (fema.gov/api/open), fetched by your browser alongside the live feeds below. The red banner at the very top appears only when a declaration is present in this page's data — the snapshot declarations above, live FEMA emergency (EM) and major-disaster (DR) declarations issued in the last 60 days, or a live NWS alert that is itself an emergency declaration — and every line links to the official FEMA declaration page and, where household aid is open, DisasterAssistance.gov. If the FEMA check is unreachable, the banner says so and shows the snapshot declarations only.</li>
       <li><b>Live weather alerts (polled every 10 min)</b> — National Weather Service active alerts, api.weather.gov/alerts/active, fetched by your browser. Pins sit at the center of the alert polygon, or of the first affected zone NWS publishes for county-based alerts; each pin links to its official alert.</li>
       <li><b>Live earthquakes (polled every 10 min)</b> — U.S. Geological Survey M2.5+ past-day GeoJSON feed, fetched by your browser. Only events USGS places in a US state or territory are pinned; each pin links to its USGS event page.</li>
       <li><b>Satellite basemap (live at use time)</b> — Esri World Imagery tiles (Esri Clarity service via ArcGIS), loaded when you switch to Satellite.</li>
@@ -1276,7 +1302,9 @@ function parseNwsFeature(f){
       changed: 'Live from the NWS active-alerts feed. Severity: ' + sev + ' · Certainty: ' + (p.certainty || '—') + ' · Urgency: ' + (p.urgency || '—') + '. Full alert area: ' + trunc(p.areaDesc || '', 220) + '.',
       action: trunc(p.instruction || '', 420) || 'Follow the National Weather Service guidance for this alert — open the official alert for the full instructions.',
       prec: 'Alert area — pin at the center of the area NWS publishes for this alert',
-      live: true, feedName: 'NWS', st: st
+      live: true, feedName: 'NWS', st: st,
+      emergencyDecl: /emergency/i.test(evName),
+      onsetMs: (p.onset || p.effective) ? new Date(p.onset || p.effective).getTime() : 0
     }
   };
 }
@@ -1355,6 +1383,166 @@ function resolveUsgsEvents(features){
   return { events: ordered.map(function(w){ return w.data; }), total: features.length, usCount: parsed.length };
 }
 
+/* ----- Emergency declarations (top banner) -----
+   The banner is built ONLY from declarations actually present in this
+   page's data: the FEMA declarations pinned in the Oct 31 snapshot, live
+   declarations returned by the FEMA open API when the visitor's browser
+   can reach it, and live NWS feed items that are themselves emergency
+   declarations. It is rebuilt from scratch on every 10-minute poll —
+   nothing is carried over, so a declaration that leaves the feeds
+   leaves the banner. */
+var FEMA_API_URL = 'https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries';
+var FEMA_WINDOW_DAYS = 60;
+var femaLiveDecls = [];
+var femaDeclInfo = { ok: null, at: null, count: 0 };
+
+var SNAPSHOT_DECLS = [
+  { key: 'DR-4955-FL', kind: 'DR', title: 'Hurricane Isaias', stateAbbr: 'FL',
+    where: 'Florida — 15 designated counties; Individual Assistance (household aid) open in 8: Bay, Escambia, Gulf, Holmes, Okaloosa, Santa Rosa, Walton & Washington',
+    declaredLabel: 'Declared Oct 27, 2026', dateMs: Date.UTC(2026, 9, 27), ih: true,
+    action: 'In one of the 8 household-aid counties? Apply for FEMA assistance — applications opened Oct 29.',
+    femaUrl: 'https://www.fema.gov/disaster/4955',
+    guideUrl: 'https://www.disasterassistance.gov', guideLabel: 'DisasterAssistance.gov — apply for aid',
+    stateGuideUrl: 'https://www.floridadisaster.org', stateGuideLabel: 'Florida Division of Emergency Management',
+    note: 'Major Disaster Declaration DR-4955-FL · Pin 27 on this board · Oct 31, 2026 snapshot' },
+  { key: 'EM-3660-NM', kind: 'EM', title: 'Severe storms and flooding — northern New Mexico', stateAbbr: 'NM',
+    where: 'New Mexico — San Juan, Rio Arriba, Cibola & Sandoval counties, plus Acoma Pueblo, the Jicarilla Apache Nation, Laguna Pueblo, San Ildefonso Pueblo & Zia Pueblo',
+    declaredLabel: 'Declared Oct 26, 2026', dateMs: Date.UTC(2026, 9, 26), ih: false,
+    action: 'Follow San Juan County and NM DHSEM instructions — do not re-enter evacuated areas until officials clear them.',
+    femaUrl: 'https://www.fema.gov/disaster/3660',
+    guideUrl: 'https://www.dhsem.nm.gov/', guideLabel: 'NM Dept. of Homeland Security & Emergency Management',
+    stateGuideUrl: null, stateGuideLabel: null,
+    note: 'Emergency Declaration EM-3660-NM · Pin 29 on this board · Oct 31, 2026 snapshot' },
+  { key: 'DR-4948-UT', kind: 'DR', title: 'Cottonwood Fire, flooding and mudslides', stateAbbr: 'UT',
+    where: 'Utah — Beaver & Piute counties',
+    declaredLabel: 'Declared Oct 7, 2026', dateMs: Date.UTC(2026, 9, 7), ih: false,
+    action: 'Public Assistance for governments and eligible nonprofits runs through FEMA; SBA disaster loans are open for businesses and homeowners in the two counties.',
+    femaUrl: 'https://www.fema.gov/disaster/4948',
+    guideUrl: 'https://dem.utah.gov', guideLabel: 'Utah Division of Emergency Management',
+    stateGuideUrl: null, stateGuideLabel: null,
+    note: 'Major Disaster Declaration DR-4948-UT · Pin 28 on this board · Oct 31, 2026 snapshot' }
+];
+
+function femaTitleCase(s){
+  return String(s || '').toLowerCase().replace(/(^|[\s\-\/])(\S)/g, function(m, sep, ch){ return sep + ch.toUpperCase(); });
+}
+function parseFemaDecls(rows){
+  var groups = {}, order = [];
+  (rows || []).forEach(function(r){
+    if (!r || !r.femaDeclarationString) return;
+    var key = r.femaDeclarationString;
+    var g = groups[key];
+    if (!g){
+      g = groups[key] = { key: key, kind: r.declarationType, num: r.disasterNumber, stateAbbr: r.state,
+        title: r.declarationTitle || '', dateMs: new Date(r.declarationDate).getTime(), areas: [], ih: false };
+      order.push(g);
+    }
+    if (r.designatedArea && g.areas.indexOf(r.designatedArea) === -1) g.areas.push(r.designatedArea);
+    if (r.ihProgramDeclared) g.ih = true;
+  });
+  return order.map(function(g){
+    var stName = STATE_BY_ABBR[g.stateAbbr] || g.stateAbbr;
+    return { key: g.key, kind: g.kind, title: femaTitleCase(g.title), stateAbbr: g.stateAbbr,
+      where: stName + ' — ' + g.areas.length + ' designated area' + (g.areas.length === 1 ? '' : 's') + ': ' + g.areas.slice(0, 6).join(', ') + (g.areas.length > 6 ? ' +' + (g.areas.length - 6) + ' more' : ''),
+      declaredLabel: 'Declared ' + fmtDT(new Date(g.dateMs)), dateMs: g.dateMs, ih: g.ih,
+      action: g.ih ? 'Household assistance (Individual Assistance) is declared for this disaster — households apply through FEMA.'
+        : (g.kind === 'EM' ? 'Emergency declaration — direct federal assistance authorized. Follow the FEMA declaration page and your state emergency management instructions.'
+        : 'Follow the FEMA declaration page and your state emergency management instructions for this declaration.'),
+      femaUrl: 'https://www.fema.gov/disaster/' + g.num,
+      guideUrl: g.ih ? 'https://www.disasterassistance.gov' : null,
+      guideLabel: g.ih ? 'DisasterAssistance.gov — apply for aid' : null,
+      stateGuideUrl: null, stateGuideLabel: null,
+      note: (g.kind === 'EM' ? 'Emergency Declaration ' : 'Major Disaster Declaration ') + g.key + ' · Live from FEMA open data' };
+  });
+}
+function fetchFemaDecls(){
+  var since = new Date(Date.now() - FEMA_WINDOW_DAYS * 24 * 3600 * 1000).toISOString();
+  var url = FEMA_API_URL + '?$top=1000&$orderby=declarationDate%20desc'
+    + '&$filter=' + encodeURIComponent("declarationDate gt '" + since + "' and (declarationType eq 'DR' or declarationType eq 'EM')")
+    + '&$select=disasterNumber,state,declarationType,declarationTitle,declarationDate,designatedArea,femaDeclarationString,ihProgramDeclared';
+  return fetch(url).then(function(r){
+    if (!r.ok) throw new Error('FEMA open API HTTP ' + r.status);
+    return r.json();
+  }).then(function(j){
+    femaLiveDecls = parseFemaDecls((j && j.DisasterDeclarationsSummaries) || []);
+    femaDeclInfo = { ok: true, at: new Date(), count: femaLiveDecls.length };
+  }).catch(function(){
+    femaLiveDecls = [];
+    femaDeclInfo = { ok: false, at: new Date(), count: 0 };
+  });
+}
+function declRank(d){
+  if (d.kind === 'NWS') return 0;
+  if (d.kind === 'EM') return 1;
+  if (d.ih) return 2;
+  return 3;
+}
+function collectDeclarations(){
+  var byKey = {};
+  SNAPSHOT_DECLS.forEach(function(d){ byKey[d.key] = d; });
+  femaLiveDecls.forEach(function(d){ byKey[d.key] = d; });
+  var list = Object.keys(byKey).map(function(k){ return byKey[k]; });
+  nwsLiveEvents.forEach(function(ev){
+    if (ev.emergencyDecl){
+      list.push({ key: 'NWS-' + ev.url, kind: 'NWS', title: ev.title, stateAbbr: ev.st,
+        where: ev.loc, declaredLabel: ev.time, dateMs: ev.onsetMs || 0, ih: false,
+        action: ev.action,
+        femaUrl: ev.url, guideUrl: null, guideLabel: null, stateGuideUrl: null, stateGuideLabel: null,
+        note: 'Live NWS feed item — an emergency declared by officials' });
+    }
+  });
+  list.sort(function(a, b){
+    var r = declRank(a) - declRank(b);
+    return r !== 0 ? r : (b.dateMs || 0) - (a.dateMs || 0);
+  });
+  return list;
+}
+function declKindLabel(d){
+  if (d.kind === 'EM') return 'Federal Emergency Declaration';
+  if (d.kind === 'DR') return 'Federal Major Disaster Declaration';
+  return 'Emergency declared by officials — live NWS alert';
+}
+function declLinksHtml(d){
+  var h = '<a href="' + esc(d.femaUrl) + '" target="_blank" rel="noopener">' + (d.kind === 'NWS' ? 'Official NWS alert — instructions ↗' : 'FEMA ' + esc(d.key) + ' — official declaration &amp; instructions ↗') + '</a>';
+  if (d.guideUrl) h += ' · <a href="' + esc(d.guideUrl) + '" target="_blank" rel="noopener">' + esc(d.guideLabel) + ' ↗</a>';
+  if (d.stateGuideUrl) h += ' · <a href="' + esc(d.stateGuideUrl) + '" target="_blank" rel="noopener">' + esc(d.stateGuideLabel) + ' ↗</a>';
+  return h;
+}
+function renderEmergencyBanner(){
+  var banner = document.getElementById('emergency-banner');
+  if (!banner) return;
+  var list = collectDeclarations();
+  if (!list.length){ banner.innerHTML = ''; banner.classList.add('hidden'); return; }
+  var top = list[0];
+  var h = '<div class="emergency-banner-in">'
+    + '<div class="emergency-head"><span class="emergency-ico" aria-hidden="true">⚠</span>'
+    + '<p class="emergency-kicker"><strong>' + (list.length === 1 ? 'Emergency declaration in effect' : list.length + ' emergency declarations in effect') + '</strong>'
+    + ' — most urgent first. Every declaration below links to the official instructions for the people affected.</p></div>'
+    + '<div class="emergency-top"><p class="emergency-title">' + esc(declKindLabel(top)) + ': ' + esc(top.title) + '</p>'
+    + '<p class="emergency-meta">' + esc(top.where) + ' · ' + esc(top.declaredLabel) + '</p>'
+    + (top.action ? '<p class="emergency-action">' + esc(top.action) + '</p>' : '')
+    + '<p class="emergency-links">' + declLinksHtml(top) + '</p>'
+    + '<p class="emergency-src mono">' + esc(top.note) + '</p></div>';
+  if (list.length > 1){
+    h += '<details class="emergency-more"><summary>All ' + list.length + ' declarations — tap to see every one</summary><ul>';
+    list.forEach(function(d){
+      h += '<li><b>' + esc(declKindLabel(d)) + ': ' + esc(d.title) + '</b><br>' + esc(d.where) + ' · ' + esc(d.declaredLabel)
+        + (d.action ? '<br>' + esc(d.action) : '')
+        + '<br>' + declLinksHtml(d)
+        + '<br><span class="mono" style="font-size:12px;opacity:.85">' + esc(d.note) + '</span></li>';
+    });
+    h += '</ul></details>';
+  }
+  h += '<p class="emergency-note mono">' + (femaDeclInfo.ok === true
+      ? 'Sources: FEMA open data (live check ' + fmtDT(femaDeclInfo.at) + ' — ' + femaDeclInfo.count + ' declaration(s) issued in the last ' + FEMA_WINDOW_DAYS + ' days) + this page’s Oct 31, 2026 snapshot. Re-checked every 10 minutes; a declaration leaves this banner when it leaves the feeds.'
+      : femaDeclInfo.ok === false
+      ? 'The FEMA live check was unreachable on the last attempt (' + fmtDT(femaDeclInfo.at) + ') — showing the declarations in this page’s Oct 31, 2026 snapshot. The live check retries at the next 10-minute poll.'
+      : 'Showing the declarations in this page’s Oct 31, 2026 snapshot — the first FEMA live check is still running.')
+    + '</p></div>';
+  banner.innerHTML = h;
+  banner.classList.remove('hidden');
+}
+
 /* ----- Polling ----- */
 var nwsLiveEvents = [], usgsLiveEvents = [];
 var nwsInfo = { ok: null, at: null, total: 0, pinned: 0 };
@@ -1414,7 +1602,8 @@ function refreshLive(){
   }).catch(function(){
     usgsInfo = { ok: false, at: new Date(), total: usgsInfo.total, usCount: usgsInfo.usCount, pinned: usgsLiveEvents.length };
   });
-  Promise.all([nwsDone, usgsDone]).then(function(){
+  var femaDone = fetchFemaDecls();
+  Promise.all([nwsDone, usgsDone, femaDone]).then(function(){
     var all = nwsLiveEvents.concat(usgsLiveEvents);
     var sig = all.map(function(ev){ return ev.url; }).join('|');
     EVENTS.length = SNAPSHOT_COUNT;
@@ -1426,11 +1615,13 @@ function refreshLive(){
       updateStats();
     }
     renderLivePanel();
+    renderEmergencyBanner();
     liveRefreshing = false;
   });
 }
 document.getElementById('btn-live-refresh').addEventListener('click', function(){ refreshLive(); });
 updateStats();
+renderEmergencyBanner();
 refreshLive();
 setInterval(refreshLive, LIVE_POLL_MS);
 </script>
