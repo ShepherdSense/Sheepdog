@@ -1,0 +1,31 @@
+name: Publish export to index.html (temporary)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Download export from temporary release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/assets
+          gh release download tmp-publish-r3 --repo ShepherdSense/Shep-Herd -D /tmp/assets --pattern 'interactive-us-local-events-map.html'
+          s=$(stat -c%s /tmp/assets/interactive-us-local-events-map.html)
+          if [ "$s" != "11628434" ]; then echo "SIZE MISMATCH: got $s want 11628434"; exit 1; fi
+          echo "export size OK: $s"
+      - name: Replace index.html and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mv -f /tmp/assets/interactive-us-local-events-map.html index.html
+          git add index.html
+          git status --short
+          git commit -m "Replace index.html with updated Shep-Herd export (family-friendly slideshows)"
+          git push origin main
