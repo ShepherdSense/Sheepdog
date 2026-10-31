@@ -1,0 +1,68 @@
+name: Inspect export download links (temporary)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download assets from temporary release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/assets
+          gh release download tmp-publish-r3 -D /tmp/assets
+          ls -l /tmp/assets
+      - name: Verify asset byte sizes
+        run: |
+          check() { s=$(stat -c%s "/tmp/assets/$1"); if [ "$s" = "$2" ]; then echo "OK $1 = $s"; else echo "MISMATCH $1: got $s want $2"; exit 1; fi; }
+          check interactive-us-local-events-map.html 11628434
+          check family-survival-guide-slideshow.pptx 16776914
+          check family-emergency-quick-references-slideshow.pptx 17754711
+          check Family_Survival_Travel_Guide_NC_All_100_Counties_USA_2026-10-31.pdf 508469
+          check Family_Emergency_Quick_References_and_Logs_2026-10-31.pdf 97201
+      - name: Inspect slideshow download links in export
+        run: |
+          python3 - <<'PYEOF'
+          import re, base64
+          p = '/tmp/assets/interactive-us-local-events-map.html'
+          src = open(p, encoding='utf-8', errors='replace').read()
+          print('export chars:', len(src))
+          print('=== anchor download links (pptx/pdf) ===')
+          n = 0
+          for m in re.finditer(r'<a\b[^>]*>', src, re.I):
+              tag = m.group(0)
+              if not re.search(r'\.pptx|\.pdf', tag, re.I):
+                  continue
+              hm = re.search(r'href\s*=\s*"([^"]*)"|href\s*=\s*\'([^\']*)\'', tag, re.I)
+              href = (hm.group(1) or hm.group(2)) if hm else ''
+              after = re.sub(r'\s+', ' ', src[m.end():m.end()+160])
+              n += 1
+              if href.startswith('data:'):
+                  head, _, payload = href.partition(',')
+                  if ';base64' in head:
+                      try:
+                          dlen = len(base64.b64decode(payload))
+                      except Exception:
+                          dlen = 'DECODE-ERR'
+                      print(f'[{n}] DATA-URI mime={head[:100]} decoded_bytes={dlen} linktext={after[:120]}')
+                  else:
+                      print(f'[{n}] DATA-URI (not base64) mime={head[:100]} chars={len(payload)} linktext={after[:120]}')
+              else:
+                  print(f'[{n}] PATH href={href[:220]} linktext={after[:120]}')
+          print('anchor links found:', n)
+          print('=== inline data-URI blobs (pptx/pdf mimetypes anywhere) ===')
+          for mime in ['application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/pdf']:
+              for m in re.finditer('data:' + re.escape(mime) + r';base64,', src):
+                  start = m.end()
+                  q = re.search(r'["\']', src[start:start+45000000])
+                  if not q:
+                      print(mime, 'unterminated'); continue
+                  payload = src[start:start+q.start()]
+                  try:
+                      dlen = len(base64.b64decode(payload))
+                  except Exception:
+                      dlen = 'DECODE-ERR'
+                  print(f'{mime}: b64chars={len(payload)} decoded_bytes={dlen}')
+          PYEOF
