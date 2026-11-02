@@ -328,6 +328,53 @@
   .card--live{box-shadow:inset 0 0 0 1.5px rgba(45,212,191,.55)}
   .tag.live{color:var(--accent-ink);background:var(--earth);border-color:var(--earth)}
   .badge.livebadge{color:var(--earth)}
+
+  /* ---------- grouped map layers + tucked-away tools (clean first view) ---------- */
+  .layerbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  .layerbar .lb-label{font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .lgroup{border:1.5px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:10px 18px;font-weight:700;font-size:15px;min-height:48px}
+  .lgroup[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .layerbar .lb-note{font-size:13px;color:var(--muted);flex:1 1 220px}
+  .tooldetails{border-bottom:1px solid var(--line);background:var(--panel)}
+  .tooldetails summary{cursor:pointer;font-weight:700;font-size:16px;padding:13px 14px;min-height:48px;color:var(--ink)}
+  .tooldetails summary::marker{color:var(--accent)}
+  .toolbody{padding:2px 14px 14px}
+  .toolhint{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
+  .subtoggles{display:flex;gap:7px;flex-wrap:wrap}
+  .subtoggle{border:1.5px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:9px 15px;font-weight:600;font-size:14.5px;min-height:44px}
+  .subtoggle[aria-pressed="true"]{background:var(--earth);color:#06201c;border-color:var(--earth)}
+  .substatus{font-size:14px;color:var(--ink2);margin:10px 0 0;min-height:1.2em}
+  .substatus b{color:var(--ink)}
+  .tfrlist{list-style:none;margin:8px 0;padding:0}
+  .tfrlist li{padding:9px 0;border-bottom:1px dashed var(--line);font-size:14.5px;color:var(--ink2)}
+  .tfrlist li:last-child{border-bottom:none}
+  .tfrlist b{color:var(--ink)}
+  .refnote{background:#2a1215;border:1.5px solid var(--crit);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ink);margin:10px 0}
+  .refnote b{color:#ffb3ac}
+  .pointpanel{border-top:1.5px solid var(--accent);padding:13px 14px;background:#1d1530}
+  .pointpanel h3{font-family:"Barlow Condensed",sans-serif;font-size:21px;text-transform:uppercase;letter-spacing:.03em;margin:0 0 4px}
+  .pointpanel p{font-size:14.5px;color:var(--ink2);margin:5px 0}
+  .pointpanel .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+  .floodresult{margin-top:10px;border-radius:10px;padding:11px 13px;font-size:15px;display:none}
+  .floodresult.show{display:block}
+  .floodresult.high{background:#2a1215;border:1.5px solid var(--crit);color:var(--ink)}
+  .floodresult.lower{background:var(--panel2);border:1.5px solid var(--earth);color:var(--ink)}
+  .floodresult.none{background:var(--panel2);border:1.5px solid var(--warn);color:var(--ink)}
+  /* freshness + offline pack boxes */
+  .boxsum{cursor:pointer;font-family:"Barlow Condensed",sans-serif;font-size:22px;text-transform:uppercase;letter-spacing:.03em;min-height:44px;color:var(--ink)}
+  .boxsum::marker{color:var(--accent)}
+  .freshrow{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:14.5px;color:var(--ink2);flex-wrap:wrap}
+  .freshrow:last-of-type{border-bottom:none}
+  .freshrow b{color:var(--ink)}
+  .freshrow .when{font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-align:right}
+  .freshrow .ok{color:var(--community);font-weight:700}
+  .freshrow .bad{color:var(--crit);font-weight:700}
+  .honestline{background:var(--panel2);border:1.5px solid var(--warn);border-radius:10px;padding:11px 13px;font-size:15px;color:var(--ink);margin-top:12px}
+  .packrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  .packrow select{min-height:48px;border:1.5px solid var(--line);border-radius:10px;padding:0 10px;font:inherit;font-size:15.5px;background:var(--panel2);color:var(--ink);flex:1 1 220px;max-width:380px}
+  .coverage{font-size:14.5px;color:var(--ink2);margin-top:10px}
+  .coverage b{color:var(--ink)}
+  .coverage ul{margin:6px 0;padding-left:19px}
 </style>
 </head>
 <body>
@@ -443,6 +490,38 @@
     <p class="livenote">These feeds cover <b>all 50 states</b> (plus DC and US territories), and NWS alerting reaches <b>every county and county-equivalent in the country</b> — so an alert or quake in any county, in any state, appears here when it occurs. A county or state with no pin is one where nothing in these feeds is happening right now, not a gap in coverage. If a feed is unreachable, its cell says so plainly and everything else on the board keeps working.</p>
   </section>
 
+  <div class="grid2" style="margin-top:0;margin-bottom:14px">
+    <section class="box">
+      <details id="fresh-details">
+        <summary class="boxsum">Source freshness — when each feed was actually retrieved</summary>
+        <div style="margin-top:8px">
+          <div class="freshrow"><span><b>Snapshot board</b> (pins 1–29) — police blotters, DOTs, NIFC, news</span><span class="when">Fixed snapshot<br>Sat Oct 31, 2026 · midday ET</span></div>
+          <div class="freshrow"><span><b>National Weather Service</b> — active alerts (LIVE)</span><span class="when" id="fresh-nws">First check running…</span></div>
+          <div class="freshrow"><span><b>USGS</b> — earthquakes M2.5+, past day (LIVE)</span><span class="when" id="fresh-usgs">First check running…</span></div>
+          <div class="freshrow"><span><b>FEMA Open Data</b> — emergency &amp; disaster declarations (LIVE)</span><span class="when" id="fresh-fema">First check running…</span></div>
+          <div class="freshrow"><span><b>NOAA Storm Prediction Center</b> — severe outlooks, days 1–3</span><span class="when" id="fresh-spc">Layer off — retrieved when you turn an outlook on</span></div>
+          <div class="freshrow"><span><b>Radar mosaic</b> — NEXRAD via Iowa State IEM</span><span class="when" id="fresh-radar">Layer off</span></div>
+          <div class="freshrow"><span><b>Lightning tiles</b> — GOES-East GLM</span><span class="when" id="fresh-glm">Unavailable — IEM publishes no verified GLM tile layer</span></div>
+          <div class="freshrow"><span><b>FAA TFRs</b> — published Temporary Flight Restrictions</span><span class="when" id="fresh-tfr">Layer off — retrieved when you turn TFRs on</span></div>
+          <div class="freshrow"><span><b>FEMA NFHL</b> — flood hazard zones (point check)</span><span class="when">Queried live, only for the<br>small window you click</span></div>
+        </div>
+        <p class="honestline"><b>Missing reports are not an all-clear.</b> A feed that is quiet, a layer that failed to load, or a county with no pin means <b>nothing was reported there in the data this page could retrieve</b> — it never proves conditions are safe. Official warnings and local officials govern.</p>
+      </details>
+    </section>
+    <section class="box">
+      <details id="pack-details">
+        <summary class="boxsum">Save your area — offline pack</summary>
+        <p>Build a small pack for one state — its snapshot events, the live pins and declarations touching it right now, the source-freshness times, and the honest coverage note below — and <b>download it to this device</b>, where it stays yours offline. Nothing is uploaded; the pack is built in your browser from this page's current data.</p>
+        <div class="packrow">
+          <label for="pack-state" style="font-size:14px;font-weight:600;color:var(--ink2)">State for the pack:</label>
+          <select id="pack-state" aria-label="Choose the state for your offline pack"></select>
+          <button class="btn primary" type="button" id="btn-pack" style="min-height:48px">⬇ Build &amp; download pack</button>
+        </div>
+        <div class="coverage" id="pack-coverage" aria-live="polite">Pick a state and its coverage note appears here — including what the pack <b>cannot</b> carry.</div>
+      </details>
+    </section>
+  </div>
+
   <section class="controls" aria-label="Find events">
     <div class="searchrow">
       <input type="search" id="q" placeholder="Search your city, county, or state — or a kind of event: “fire”, “flood”, “parade”…" aria-label="Search events by city, county, state, or keyword">
@@ -503,8 +582,59 @@
         </span>
         <span style="font-size:13px;color:var(--muted)"><b>Satellite is real Esri World Imagery</b> — actual aerial imagery tiles (no road or place labels on the imagery itself). <b>Terrain is a separate layer, not imagery:</b> check a ZIP above and the page downloads public elevation data for that ZIP's area and shades it as relief.</span>
       </div>
+      <div class="layerbar" role="group" aria-label="Map layer groups — show or hide whole groups on the map">
+        <span class="lb-label">Map layers</span>
+        <button class="lgroup" type="button" data-group="weather" aria-pressed="true">🌦 Weather</button>
+        <button class="lgroup" type="button" data-group="quakes" aria-pressed="true">🌎 Quakes</button>
+        <button class="lgroup" type="button" data-group="roads" aria-pressed="true">🛣 Roads</button>
+        <button class="lgroup" type="button" data-group="airspace" aria-pressed="false">✈ Airspace</button>
+        <span class="lb-note">Tap a group to show or hide it <b>on the map only</b> — feed cards always stay, so nothing is ever hidden from you. Extra layers (radar, outlooks, TFRs…) live under “More layers &amp; tools” below, off by default.</span>
+      </div>
+      <details class="tooldetails" id="layer-tools">
+        <summary>▸ More layers &amp; tools — radar, lightning, severe outlooks, TFRs, nuclear reference points</summary>
+        <div class="toolbody">
+          <p class="toolhint">Weather extras — live, refreshed on the same 10-minute poll</p>
+          <div class="subtoggles" role="group" aria-label="Weather extra layers">
+            <button class="subtoggle" type="button" data-sub="radar" aria-pressed="false">Radar mosaic (NEXRAD)</button>
+            <button class="subtoggle" type="button" data-sub="lightning" aria-pressed="false">Lightning (GOES GLM) — unavailable</button>
+            <button class="subtoggle" type="button" data-sub="spc1" aria-pressed="false">SPC outlook — Day 1</button>
+            <button class="subtoggle" type="button" data-sub="spc2" aria-pressed="false">SPC outlook — Day 2</button>
+            <button class="subtoggle" type="button" data-sub="spc3" aria-pressed="false">SPC outlook — Day 3</button>
+            <button class="subtoggle" type="button" data-sub="watches" aria-pressed="false">SPC / NWS watch boxes</button>
+          </div>
+          <p class="toolhint">Airspace &amp; reference</p>
+          <div class="subtoggles" role="group" aria-label="Airspace and reference layers">
+            <button class="subtoggle" type="button" data-sub="tfr" aria-pressed="false">FAA Temporary Flight Restrictions</button>
+            <button class="subtoggle" type="button" data-sub="nuclear" aria-pressed="false">Nuclear plant reference points</button>
+            <button class="subtoggle" type="button" data-sub="fema" aria-pressed="true">FEMA declaration pins</button>
+          </div>
+          <p class="substatus" id="sub-status" aria-live="polite">All extra layers are <b>off</b> — the map stays exactly as it was until you turn one on.</p>
+          <div id="tfr-wrap" class="hidden">
+            <h4 style="margin:14px 0 4px;font-size:16px">FAA Temporary Flight Restrictions (TFRs)</h4>
+            <div class="refnote"><b>Published reference only — not live authorization.</b> These shapes and notices are the FAA's published TFR records, shown so you can see where restrictions exist. They do <b>not</b> authorize or clear any flight. Before flying, check the current official NOTAMs and TFR list at <a href="https://tfr.faa.gov/tfr2/list.html" target="_blank" rel="noopener" style="color:#ffd166">tfr.faa.gov ↗</a> — that list governs.</div>
+            <ul class="tfrlist" id="tfr-list"></ul>
+          </div>
+          <div id="nuclear-wrap" class="hidden">
+            <h4 style="margin:14px 0 4px;font-size:16px">Nuclear power plants — reference points only</h4>
+            <p style="font-size:14.5px;color:var(--ink2);margin:5px 0"><span id="nuclear-count"></span> operating US reactor sites, plotted as plain reference points (site-vicinity locations) from the NRC's public reactor list. <b>No plume radius is modeled and no zone is drawn</b> — these dots say “a plant is here,” nothing more. In a real radiological emergency, officials — not this map — define any protective-action area. Source: <a href="https://www.nrc.gov/reactors/operating/list-power-reactor-units.html" target="_blank" rel="noopener">U.S. NRC — operating reactor units ↗</a></p>
+            <details><summary style="cursor:pointer;font-weight:600;font-size:14.5px;padding:6px 0">See the plant list</summary><p style="font-size:13.5px;color:var(--muted)" id="nuclear-list"></p></details>
+          </div>
+        </div>
+      </details>
       <div class="basemap-note hidden" id="basemap-note" role="status" aria-live="polite"></div>
       <div id="map" role="application" aria-label="Interactive map of local events across the United States"></div>
+      <div class="pointpanel hidden" id="point-panel">
+        <h3>📍 Point check — <span class="mono" id="point-coords" style="font-size:16px"></span></h3>
+        <p>You clicked this spot on the map. Copy its coordinates, check the mapped flood risk for just this small window, or use it in the route planner below.</p>
+        <div class="actions">
+          <button class="btn" type="button" id="btn-copy-coords">⧉ Copy coordinates</button>
+          <button class="btn primary" type="button" id="btn-flood">🌊 Show flood risk here</button>
+          <button class="btn" type="button" id="btn-point-dest">Use as route destination</button>
+          <button class="btn" type="button" id="btn-point-stop">Add as route stop</button>
+        </div>
+        <p class="substatus" id="point-status" aria-live="polite"></p>
+        <div class="floodresult" id="flood-result" aria-live="polite"></div>
+      </div>
       <div class="trafficnote"><b>About traffic:</b> there is <b>no live-traffic layer on this map, on purpose.</b> Live traffic flow (Google Maps-style green/yellow/red roads) needs a Google Maps API key with billing, which a static page like this doesn't have — so it isn't faked here. The road pins are <b>reported incidents and closures from state DOTs</b>, not traffic flow, and a road pin is an incident reference, not a map of the full closed segment. For live flow, use your maps app; for closures, the DOT notice linked on each pin governs.</div>
       <div class="routepanel" id="routepanel">
         <h3>Evacuation routes — official first, computed alternates second</h3>
@@ -533,6 +663,17 @@
           </select>
           <button class="btn primary" type="button" id="btn-route">Compute alternate routes</button>
           <button class="btn" type="button" id="btn-route-clear">Clear routes</button>
+        </div>
+        <div class="routecontrols">
+          <button class="btn" type="button" id="btn-dest-click">Use clicked map point as destination</button>
+          <button class="btn" type="button" id="btn-stop-click">Add clicked point as a stop</button>
+          <button class="btn" type="button" id="btn-stops-clear">Clear stops</button>
+          <span class="route-origin" id="stops-label">Stops: none — click anywhere on the map, then add that point here (up to 3).</span>
+        </div>
+        <div class="routecontrols">
+          <button class="btn" type="button" id="btn-gpx">⬇ Export route as GPX</button>
+          <button class="btn" type="button" id="btn-sketch">✏ Straight-line offline sketch</button>
+          <span class="route-origin">GPX uses the last computed road route if there is one, otherwise the sketch points. The sketch is straight lines between your points — a pencil-on-paper backup that works with no network, <b>not</b> a road route.</span>
         </div>
         <p class="routestatus" id="route-status" aria-live="polite"></p>
         <ul class="routelist" id="route-list"></ul>
@@ -596,6 +737,13 @@
       <li><b>Satellite basemap (live at use time)</b> — Esri World Imagery tiles (Esri Clarity service via ArcGIS), loaded when you switch to Satellite.</li>
       <li><b>Terrain / elevation (live at use time)</b> — AWS Terrain Tiles (Terrarium format), compiled from public elevation sources including USGS GMTED2010 and SRTM; downloaded per-ZIP when you run a ZIP check, never bundled. ZIP coordinates from Zippopotam.us. Not DTED2 — see the terrain panel's own caption.</li>
       <li><b>Computed alternate routes (live at use time)</b> — OSRM routing engine (router.project-osrm.org) over the OpenStreetMap road network. Computed alternates only — never presented as official routes.</li>
+      <li><b>Radar mosaic (optional layer, live at use time)</b> — NEXRAD composite radar tiles via the Iowa State University IEM (mesonet.agron.iastate.edu), layer nexrad-n0q-900913 as listed on the IEM's OGC services page. Off by default; retrieved only when you turn the layer on, and refreshed on the 10-minute poll while it stays on.</li>
+      <li><b>Lightning tiles — not available.</b> The IEM's OGC services page lists no GOES Geostationary Lightning Mapper (GLM) tile layer, and the GLM layer name this page previously used answers every tile request with an “Invalid TMS Request” error image — so no lightning tiles are drawn at all. That is a data gap, not an all-clear: for lightning information, use an official source such as weather.gov.</li>
+      <li><b>Severe outlooks &amp; watch boxes (optional layers, live at use time)</b> — NOAA Storm Prediction Center categorical outlook GeoJSON for days 1–3 (spc.noaa.gov), and watch polygons from the live NWS alerts feed. Off by default.</li>
+      <li><b>FAA Temporary Flight Restrictions (optional layer, live at use time)</b> — FAA TFR GeoServer (tfr.faa.gov), published records only — <b>published reference, not live authorization</b>; each item links to its full official notice, and the current official list at tfr.faa.gov governs.</li>
+      <li><b>Flood point check (live at use time, clicked window only)</b> — FEMA National Flood Hazard Layer (NFHL), Flood Hazard Zones layer, queried for a small envelope around the point you click — never for the whole map. Authoritative maps and determinations: FEMA Flood Map Service Center (msc.fema.gov).</li>
+      <li><b>Nuclear plant reference points (optional layer)</b> — Operating reactor site names and site-vicinity locations from the U.S. Nuclear Regulatory Commission's public reactor list (nrc.gov). Reference points only — no plume or zone modeling.</li>
+      <li><b>Mappable FEMA declarations (LIVE)</b> — The same FEMA Open Data declarations check described above also places one state-level pin per live declaration, so declarations can be found on the map as well as in the banner; designated counties are named on each pin.</li>
     </ul>
     <p style="font-size:13.5px">Each event's detail panel links to its own source so you can read the original. If a source corrects a story, the correction — not this snapshot — is the record.</p>
   </section>
@@ -740,6 +888,7 @@ function mapOptions(style){
     overlays: currentOverlays.length ? currentOverlays : undefined,
     marker: function(place, index, isSel){
       var ev = EVENTS[index];
+      if (window.__pinHidden && window.__pinHidden(ev)) return '<div style="display:none" aria-hidden="true"></div>';
       return '<div class="pin' + (isSel ? ' pin--on' : '') + (ev.live ? ' pin--live' : '') + '" style="' + (isSel ? '' : 'background:' + lvlColor(ev.lvl)) + '"><span>' + (index + 1) + '</span></div>';
     },
     onSelectPlace: function(index){
@@ -1494,10 +1643,11 @@ document.getElementById('btn-route').addEventListener('click', function(){
   var status = document.getElementById('route-status');
   var list = document.getElementById('route-list');
   if (!routeOrigin){ status.textContent = 'Set a start point first — check a ZIP above, or use one of the start buttons.'; return; }
-  var dest = destPoint(document.getElementById('route-dest').value);
+  var dest = window.__routeDestOverride || destPoint(document.getElementById('route-dest').value);
   status.textContent = 'Computing routes on the real road network (OpenStreetMap via the OSRM routing engine)…';
   list.innerHTML = '';
-  var url = 'https://router.project-osrm.org/route/v1/driving/' + routeOrigin.lng + ',' + routeOrigin.lat + ';' + dest.lng + ',' + dest.lat + '?alternatives=3&geometries=geojson&overview=full';
+  var __pts = [routeOrigin].concat(window.__routeStops || []).concat([dest]);
+  var url = 'https://router.project-osrm.org/route/v1/driving/' + __pts.map(function(p){ return p.lng + ',' + p.lat; }).join(';') + '?alternatives=3&geometries=geojson&overview=full';
   fetch(url).then(function(r){ return r.json(); }).then(function(j){
     if (!j || j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error('no route');
     var feats = j.routes.map(function(rt, i){ return { type: 'Feature', properties: { route: i }, geometry: rt.geometry }; });
@@ -1518,7 +1668,8 @@ document.getElementById('btn-route').addEventListener('click', function(){
     list.innerHTML = j.routes.map(function(rt, i){
       return '<li><span class="swatch" style="background:' + ROUTE_COLORS[i] + '"></span><b>Computed alternate ' + (i + 1) + '</b>' + (i === 0 ? ' (the engine\'s fastest)' : '') + ' — ' + fmtDist(rt.distance) + ' · about ' + fmtDur(rt.duration) + ' of driving in normal conditions</li>';
     }).join('') + '<li style="border-bottom:none;font-size:13.5px">Green dot = start (' + esc(routeOrigin.label) + ') · red dot = endpoint (' + esc(dest.label) + '). Drive times assume normal conditions — an emergency is not normal conditions.</li>';
-    status.textContent = 'Computed ' + j.routes.length + ' alternate route option(s) from ' + routeOrigin.label + ' toward ' + dest.label + ', drawn on the map. These are computed alternates — NOT official routes. Read the warning below before using one.';
+    window.__lastRouteGeo = j.routes[0].geometry; window.__lastRouteName = 'Computed alternate from ' + routeOrigin.label + ' toward ' + dest.label;
+    status.textContent = 'Computed ' + j.routes.length + ' alternate route option(s) from ' + routeOrigin.label + ' toward ' + dest.label + ((window.__routeStops || []).length ? ', via ' + (window.__routeStops).length + ' stop(s)' : '') + ', drawn on the map. These are computed alternates — NOT official routes. Read the warning below before using one.';
     document.querySelector('.mapcard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }).catch(function(){
     status.textContent = 'The routing service (router.project-osrm.org) could not compute a route — it may be unreachable, or there may be no road route between those points. No routes were drawn; the rest of the map still works.';
@@ -1982,7 +2133,24 @@ function refreshLive(){
   });
   var femaDone = fetchFemaDecls();
   Promise.all([nwsDone, usgsDone, femaDone]).then(function(){
-    var all = nwsLiveEvents.concat(usgsLiveEvents);
+    /* Mappable FEMA declarations: one state-level LIVE pin per live
+       declaration (aid itself is county-designated — the counties are
+       named in each pin's summary). Snapshot FEMA pins stay separate. */
+    var femaPinEvents = femaLiveDecls.slice(0, 30).map(function(d, di){
+      var st = null;
+      for (var ai = 0; ai < AREA_STATES.length; ai++) if (AREA_STATES[ai][0] === d.stateAbbr) st = AREA_STATES[ai];
+      if (!st) return null;
+      return { cat: 'fema', catLabel: 'Federal declaration (FEMA)', level: d.kind === 'EM' ? 'WARNING' : 'WATCH', lvl: d.kind === 'EM' ? 'warn' : 'watch', conf: 'VERIFIED',
+        title: d.key + ': ' + d.title, loc: st[1] + ' — designated counties in the summary', time: d.declaredLabel,
+        src: 'FEMA Open Data — Disaster Declarations Summaries (LIVE)', url: d.femaUrl,
+        sum: d.where + '.',
+        changed: 'Live from the same FEMA open-data check that drives the red banner at the top of this page. This pin sits at state level on purpose: the declaration itself is designated county by county, and the counties are named in the summary above.',
+        action: d.action || 'Follow the official FEMA declaration page for instructions.',
+        prec: 'State-level reference pin — declaration is county-based', live: true, feedName: 'FEMA', st: st[1],
+        lat: st[2] + ((di % 5) - 2) * 0.45, lng: st[3] + ((di % 7) - 3) * 0.45,
+        retrievedLabel: 'FEMA live check · retrieved ' + fmtDT(femaDeclInfo.at) };
+    }).filter(Boolean);
+    var all = nwsLiveEvents.concat(usgsLiveEvents).concat(femaPinEvents);
     var sig = all.map(function(ev){ return ev.url; }).join('|');
     EVENTS.length = SNAPSHOT_COUNT;
     all.forEach(function(ev, i){ ev.n = SNAPSHOT_COUNT + i + 1; EVENTS.push(ev); });
@@ -1993,6 +2161,7 @@ function refreshLive(){
       updateStats();
     }
     renderLivePanel();
+    if (typeof syncFresh === 'function'){ try { syncFresh(); } catch(e){} }
     renderEmergencyBanner();
     if (typeof renderArea === 'function') renderArea();
     liveRefreshing = false;
@@ -2261,6 +2430,527 @@ slidewrap.addEventListener('keydown', function(e){
   if (e.key === 'ArrowLeft'){ e.preventDefault(); ssGo(ssIdx - 1); ssStop(); }
 });
 ssRender();
+</script>
+<script>
+/* ============================================================
+   LAYER GROUPS, EXTRA LAYERS, POINT FLOOD CHECK, ROUTE EXTRAS,
+   FRESHNESS PANEL + OFFLINE PACK
+   Clean-first-view design: every feature here is OFF or tucked
+   behind the grouped layer toggles / collapsed panels until the
+   reader turns it on. All sources are public; every layer is
+   dated in the freshness panel; nothing here stores user data.
+   ============================================================ */
+window.__routeStops = [];
+window.__routeDestOverride = null;
+window.__lastRouteGeo = null;
+window.__sketchPoints = null;
+
+var groups = { weather: true, quakes: true, roads: true, airspace: false, fema: true };
+window.__pinHidden = function(ev){
+  if ((ev.cat === 'weather' || ev.cat === 'fire') && !groups.weather) return true;
+  if (ev.cat === 'earth' && !groups.quakes) return true;
+  if (ev.cat === 'roads' && !groups.roads) return true;
+  if (ev.cat === 'fema' && !groups.fema) return true;
+  return false;
+};
+var subState = { radar: false, lightning: false, spc1: false, spc2: false, spc3: false, watches: false, tfr: false, nuclear: false, fema: true };
+function subStatus(html){ var el = document.getElementById('sub-status'); if (el) el.innerHTML = html; }
+function setSubBtn(name, on){
+  var b = document.querySelector('[data-sub="' + name + '"]');
+  if (b) b.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+
+/* ---------- raster layer (radar only) via the live MapLibre map ----------
+   Verified live against the IEM service (Nov 1, 2026):
+   - Radar: layer nexrad-n0q-900913 is the documented XYZ template on the
+     IEM OGC page. Sampled tiles at zooms 0–18 returned real radar data or
+     a plain transparent no-data tile — never an error tile — so the source
+     pins scheme 'xyz' explicitly and caps maxzoom at 18 (the map overzooms
+     those tiles past 18 instead of requesting deeper, unverified levels;
+     IEM answers zoom 24+ with an HTTP error).
+   - Lightning: REMOVED. The IEM OGC page lists no GOES GLM tile layer at
+     all, and the old goes_conus_glm-900913 name answered EVERY tile
+     request — every zoom, every coordinate — with IEM's red
+     “Invalid TMS Request” error image (HTTP 200, so the map painted it).
+     There is no verified GLM tile layer to point at, so no lightning
+     tiles are drawn; the toggle now explains the gap instead. */
+function getMapSafe(){
+  try { return (mapHandle && typeof mapHandle.getMap === 'function') ? mapHandle.getMap() : null; } catch(e){ return null; }
+}
+var RASTER_DEFS = {
+  radar:     { src: 'shep-radar-src', layer: 'shep-radar-layer', opacity: 0.55, maxzoom: 18,
+               tiles: 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png' }
+};
+var rasterBucketApplied = {};
+function tileBucket(){ return Math.floor(Date.now() / 600000); }
+function ensureRasterLayers(){
+  var m = getMapSafe();
+  if (!m) return;
+  try { if (typeof m.isStyleLoaded === 'function' && !m.isStyleLoaded()) return; } catch(e){}
+  Object.keys(RASTER_DEFS).forEach(function(key){
+    var def = RASTER_DEFS[key], on = !!subState[key], bucket = tileBucket();
+    try {
+      var has = false;
+      try { has = !!m.getSource(def.src); } catch(e){}
+      if (on && has && rasterBucketApplied[key] !== bucket){ /* stale mosaic — swap in the fresh bucket */
+        try { if (m.getLayer(def.layer)) m.removeLayer(def.layer); } catch(e){}
+        try { m.removeSource(def.src); } catch(e){}
+        has = false;
+      }
+      if (on && !has){
+        m.addSource(def.src, { type: 'raster', tiles: [def.tiles + '?t=' + bucket], tileSize: 256, scheme: 'xyz', maxzoom: def.maxzoom, attribution: 'Iowa State IEM' });
+        m.addLayer({ id: def.layer, type: 'raster', source: def.src, paint: { 'raster-opacity': def.opacity } });
+        rasterBucketApplied[key] = bucket;
+        var fEl = document.getElementById('fresh-radar');
+        if (fEl) fEl.innerHTML = '<span class="ok">● Layer on</span><br>Mosaic current as of ' + fmtDT(new Date());
+      }
+      if (!on && has){
+        try { if (m.getLayer(def.layer)) m.removeLayer(def.layer); } catch(e){}
+        try { m.removeSource(def.src); } catch(e){}
+        rasterBucketApplied[key] = null;
+      }
+    } catch(e){ /* style mid-swap — the interval below retries */ }
+  });
+}
+
+/* ---------- raster tile-error handling ----------
+   If the IEM tile service ever fails a tile request (HTTP error, network
+   failure), take the radar layer OFF the map and say so — a failed tile
+   must never sit on the map as an error image or a broken layer. Fires
+   once per activation: turning the layer off stops further tile loads,
+   and the reader can deliberately turn radar back on to retry. */
+var rasterErrorMap = null;
+function attachRasterErrorHandler(){
+  var m = getMapSafe();
+  if (!m || rasterErrorMap === m) return;
+  rasterErrorMap = m;
+  try {
+    m.on('error', function(e){
+      var sid = (e && (e.sourceId || (e.source && e.source.id))) || '';
+      if (!sid) return;
+      Object.keys(RASTER_DEFS).forEach(function(key){
+        if (RASTER_DEFS[key].src !== sid || !subState[key]) return;
+        subState[key] = false;
+        setSubBtn(key, false);
+        ensureRasterLayers();
+        var fEl = document.getElementById('fresh-radar');
+        if (fEl) fEl.innerHTML = '<span class="bad">● Tile error</span><br>Layer turned off ' + fmtDT(new Date());
+        subStatus('<b>Radar tiles failed to load</b> — the Iowa State IEM tile service returned an error, so the radar layer has been turned off rather than left on the map showing error tiles. That is a data gap, not an all-clear. You can try turning radar on again.');
+      });
+    });
+  } catch(e){}
+}
+
+/* ---------- map click: point check ---------- */
+var clickedPoint = null;
+var attachedMap = null;
+function attachMapClick(){
+  var m = getMapSafe();
+  if (!m || attachedMap === m) return;
+  attachedMap = m;
+  try {
+    m.on('click', function(e){
+      if (e && e.lngLat) setClickedPoint(e.lngLat.lat, e.lngLat.lng);
+    });
+  } catch(e){}
+}
+function setClickedPoint(lat, lng){
+  clickedPoint = { lat: lat, lng: lng };
+  var panel = document.getElementById('point-panel');
+  panel.classList.remove('hidden');
+  document.getElementById('point-coords').textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+  document.getElementById('point-status').textContent = '';
+  var fr = document.getElementById('flood-result');
+  fr.className = 'floodresult'; fr.innerHTML = '';
+  setOverlay('clicked', {
+    id: 'clicked',
+    data: { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [lng, lat] } },
+    layers: [{ id: 'clicked-circle', type: 'circle', source: 'clicked', paint: { 'circle-radius': 8, 'circle-color': '#a78bfa', 'circle-stroke-color': '#f3f0fa', 'circle-stroke-width': 2.5 } }]
+  });
+}
+setInterval(function(){ ensureRasterLayers(); attachMapClick(); attachRasterErrorHandler(); }, 2500);
+
+document.getElementById('btn-copy-coords').addEventListener('click', function(){
+  var st = document.getElementById('point-status');
+  if (!clickedPoint){ st.textContent = 'Click a spot on the map first.'; return; }
+  var txt = clickedPoint.lat.toFixed(6) + ', ' + clickedPoint.lng.toFixed(6);
+  function done(){ st.innerHTML = '<b>Copied:</b> ' + txt; }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(function(){ fallbackCopy(txt); done(); });
+  } else { fallbackCopy(txt); done(); }
+});
+function fallbackCopy(txt){
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+  } catch(e){}
+}
+
+/* ---------- flood check: FEMA NFHL, clicked small window only ---------- */
+document.getElementById('btn-flood').addEventListener('click', function(){
+  var box = document.getElementById('flood-result');
+  var st = document.getElementById('point-status');
+  if (!clickedPoint){ st.textContent = 'Click a spot on the map first, then run the flood check.'; return; }
+  var lat = clickedPoint.lat, lng = clickedPoint.lng;
+  var dLat = 0.04, dLng = 0.05;
+  var env = (lng - dLng) + ',' + (lat - dLat) + ',' + (lng + dLng) + ',' + (lat + dLat);
+  box.className = 'floodresult show none';
+  box.innerHTML = 'Checking the FEMA flood hazard layer for just this small window (about ±0.04° around your point)…';
+  setOverlay('floodbox', {
+    id: 'floodbox',
+    data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [[lng - dLng, lat + dLat], [lng + dLng, lat + dLat], [lng + dLng, lat - dLat], [lng - dLng, lat - dLat], [lng - dLng, lat + dLat]] } },
+    layers: [{ id: 'floodbox-line', type: 'line', source: 'floodbox', paint: { 'line-color': '#56b8f5', 'line-width': 2, 'line-dasharray': [2, 2], 'line-opacity': 0.95 } }]
+  });
+  var url = 'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer/28/query?geometry=' + encodeURIComponent(env)
+    + '&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=FLD_ZONE,ZONE_SUBTY,SFHA_TF&returnGeometry=false&f=json';
+  fetch(url).then(function(r){ if (!r.ok) throw new Error('NFHL HTTP ' + r.status); return r.json(); }).then(function(j){
+    var feats = (j && j.features) || [];
+    var seen = {}, zones = [], high = false;
+    feats.forEach(function(f){
+      var a = f.attributes || {};
+      var key = (a.FLD_ZONE || '?') + '|' + (a.ZONE_SUBTY || '');
+      if (seen[key]) return; seen[key] = 1;
+      zones.push(a);
+      if (a.SFHA_TF === 'T' || /^(A|V)/.test(String(a.FLD_ZONE || ''))) high = true;
+    });
+    var msc = '<a href="https://msc.fema.gov/portal/home" target="_blank" rel="noopener">FEMA Flood Map Service Center ↗</a>';
+    var caveat = '<br><b>Important:</b> unshaded and unmapped areas can still flood — a large share of flood claims come from outside the mapped high-risk zones. This quick check reads the mapped zones in one small window; it is <b>not</b> a flood determination. For the official map for an address, use the ' + msc + '.';
+    if (!zones.length){
+      box.className = 'floodresult show none';
+      box.innerHTML = '<b>No FEMA-mapped flood hazard zone in this small window.</b> That can mean the area is unmapped or mapped as minimal-risk — it does <b>not</b> mean it cannot flood.' + caveat;
+    } else if (high){
+      box.className = 'floodresult show high';
+      box.innerHTML = '<b>⚠ High-risk flood zone mapped in this window:</b> ' + zones.map(function(a){ return 'Zone ' + esc(a.FLD_ZONE || '?') + (a.ZONE_SUBTY ? ' — ' + esc(a.ZONE_SUBTY) : '') + (a.SFHA_TF === 'T' ? ' (Special Flood Hazard Area)' : ''); }).join('; ') + '. High-risk zones carry at least a 1%-annual-chance flood risk on FEMA\'s maps, and flood insurance is typically required for federally backed mortgages inside them.' + caveat;
+    } else {
+      box.className = 'floodresult show lower';
+      box.innerHTML = '<b>Mapped zones in this window are not FEMA high-risk zones:</b> ' + zones.map(function(a){ return 'Zone ' + esc(a.FLD_ZONE || '?') + (a.ZONE_SUBTY ? ' — ' + esc(a.ZONE_SUBTY) : ''); }).join('; ') + '.' + caveat;
+    }
+  }).catch(function(){
+    box.className = 'floodresult show none';
+    box.innerHTML = '<b>The FEMA flood layer could not be reached just now</b> — no flood answer was produced for this point, and “no answer” is not “no risk.” Try again, or check the address directly at the <a href="https://msc.fema.gov/portal/home" target="_blank" rel="noopener">FEMA Flood Map Service Center ↗</a>.';
+  });
+});
+
+/* ---------- SPC outlooks (days 1–3) + watch boxes ---------- */
+var SPC_URLS = { 1: 'https://www.spc.noaa.gov/products/outlook/day1otlk_cat.lyr.geojson', 2: 'https://www.spc.noaa.gov/products/outlook/day2otlk_cat.lyr.geojson', 3: 'https://www.spc.noaa.gov/products/outlook/day3otlk_cat.lyr.geojson' };
+function fetchSPC(day){
+  subStatus('Loading the SPC Day ' + day + ' categorical outlook from spc.noaa.gov…');
+  fetch(SPC_URLS[day]).then(function(r){ if (!r.ok) throw new Error('SPC HTTP ' + r.status); return r.json(); }).then(function(j){
+    if (!subState['spc' + day]) return;
+    setOverlay('spc' + day, { id: 'spc' + day, data: j, layers: [
+      { id: 'spc' + day + '-fill', type: 'fill', source: 'spc' + day, paint: { 'fill-color': ['get', 'fill'], 'fill-opacity': 0.32 } },
+      { id: 'spc' + day + '-line', type: 'line', source: 'spc' + day, paint: { 'line-color': ['get', 'stroke'], 'line-width': 1.5, 'line-opacity': 0.9 } }
+    ] });
+    var p = (j.features && j.features[0] && j.features[0].properties) || {};
+    var labels = {};
+    (j.features || []).forEach(function(f){ if (f.properties && f.properties.LABEL2) labels[f.properties.LABEL2] = 1; });
+    subStatus('<b>SPC Day ' + day + ' outlook on the map</b> — ' + esc(Object.keys(labels).join(' · ') || 'no risk areas published') + (p.ISSUE_ISO ? ' · Issued ' + fmtDT(p.ISSUE_ISO) : '') + (p.EXPIRE_ISO ? ' · Valid until ' + fmtDT(p.EXPIRE_ISO) : '') + ' · Source: NOAA Storm Prediction Center.');
+    var fe = document.getElementById('fresh-spc');
+    if (fe) fe.innerHTML = '<span class="ok">● Retrieved</span><br>' + fmtDT(new Date()) + ' (Day ' + day + (p.ISSUE_ISO ? ', issued ' + fmtDT(p.ISSUE_ISO) : '') + ')';
+  }).catch(function(){
+    setSubBtn('spc' + day, false); subState['spc' + day] = false;
+    subStatus('<b>SPC Day ' + day + ' outlook could not be loaded</b> — spc.noaa.gov was unreachable from this device. The layer is off; everything else keeps working, and a missing outlook is not an all-clear.');
+  });
+}
+function fetchWatches(){
+  subStatus('Loading active watch boxes from the live NWS alerts feed…');
+  fetch(NWS_URL, { headers: { 'Accept': 'application/geo+json' } }).then(function(r){ if (!r.ok) throw new Error('NWS HTTP ' + r.status); return r.json(); }).then(function(j){
+    if (!subState.watches) return;
+    var feats = ((j && j.features) || []).filter(function(f){ return f.geometry && /watch/i.test((f.properties && f.properties.event) || ''); });
+    if (!feats.length){
+      subStatus('<b>No active watch boxes with published polygons in the NWS feed right now.</b> That is what the feed currently holds — watches can be issued at any time, and “none on the map” is not an all-clear. Live watch/warning pins still show under the Weather layer.');
+      return;
+    }
+    setOverlay('watches', { id: 'watches', data: { type: 'FeatureCollection', features: feats }, layers: [
+      { id: 'watches-fill', type: 'fill', source: 'watches', paint: { 'fill-color': '#8db4ff', 'fill-opacity': 0.15 } },
+      { id: 'watches-line', type: 'line', source: 'watches', paint: { 'line-color': '#8db4ff', 'line-width': 2, 'line-dasharray': [3, 2], 'line-opacity': 0.95 } }
+    ] });
+    subStatus('<b>' + feats.length + ' active watch box(es) on the map</b> — ' + esc(feats.map(function(f){ return f.properties.event; }).filter(function(v, i, a){ return a.indexOf(v) === i; }).join(' · ')) + '. Source: National Weather Service live feed (watches are issued with the Storm Prediction Center).');
+  }).catch(function(){
+    setSubBtn('watches', false); subState.watches = false;
+    subStatus('<b>Watch boxes could not be loaded</b> — the NWS feed was unreachable for this layer. Live NWS pins may still be on the board from the main poll.');
+  });
+}
+
+/* ---------- FAA TFRs ---------- */
+var TFR_URL = 'https://tfr.faa.gov/geoserver/TFR/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=TFR:V_TFR_LOC&outputFormat=application/json&maxFeatures=200';
+function tfrNoticeUrl(notamKey){
+  var head = String(notamKey || '').split('-')[0];
+  if (!/^\d+\/\d+$/.test(head)) return 'https://tfr.faa.gov/tfr2/list.html';
+  return 'https://tfr.faa.gov/save_pages/detail_' + head.replace('/', '_') + '.html';
+}
+function fmtTfrDate(s){
+  var m = String(s || '').match(/^(\d{4})(\d{2})(\d{2})/);
+  return m ? (m[1] + '-' + m[2] + '-' + m[3]) : String(s || '—');
+}
+function fetchTFR(){
+  subStatus('Loading published FAA Temporary Flight Restrictions from tfr.faa.gov…');
+  fetch(TFR_URL).then(function(r){ if (!r.ok) throw new Error('TFR HTTP ' + r.status); return r.json(); }).then(function(j){
+    if (!subState.tfr) return;
+    var feats = (j && j.features) || [];
+    setOverlay('tfr', { id: 'tfr', data: { type: 'FeatureCollection', features: feats }, layers: [
+      { id: 'tfr-fill', type: 'fill', source: 'tfr', paint: { 'fill-color': '#ff5a4e', 'fill-opacity': 0.10 } },
+      { id: 'tfr-line', type: 'line', source: 'tfr', paint: { 'line-color': '#ff5a4e', 'line-width': 1.5, 'line-opacity': 0.9 } }
+    ] });
+    document.getElementById('tfr-wrap').classList.remove('hidden');
+    var list = document.getElementById('tfr-list');
+    list.innerHTML = feats.slice(0, 12).map(function(f){
+      var p = f.properties || {};
+      return '<li><b>' + esc(p.TITLE || 'Temporary Flight Restriction') + '</b>' + (p.STATE ? ' · ' + esc(p.STATE) : '') + '<br>NOTAM ' + esc(p.NOTAM_KEY || '—') + (p.LEGAL ? ' · ' + esc(p.LEGAL) : '') + ' · Record last modified ' + esc(fmtTfrDate(p.LAST_MODIFICATION_DATETIME)) + '<br><a href="' + tfrNoticeUrl(p.NOTAM_KEY) + '" target="_blank" rel="noopener">Load full notice ↗</a></li>';
+    }).join('') + (feats.length > 12 ? '<li>…and ' + (feats.length - 12) + ' more TFR records in this pull (' + feats.length + ' shown on the map, capped at 200 records). The complete, current list is at <a href="https://tfr.faa.gov/tfr2/list.html" target="_blank" rel="noopener">tfr.faa.gov ↗</a>.</li>' : '');
+    subStatus('<b>' + feats.length + ' published TFR records on the map</b> — published reference only, <b>not</b> live authorization. Each item below links to its full official notice.');
+    var fe = document.getElementById('fresh-tfr');
+    if (fe) fe.innerHTML = '<span class="ok">● Retrieved</span><br>' + fmtDT(new Date()) + ' · ' + feats.length + ' records';
+  }).catch(function(){
+    document.getElementById('tfr-wrap').classList.remove('hidden');
+    document.getElementById('tfr-list').innerHTML = '<li><b>The FAA TFR service (tfr.faa.gov) could not be reached from this device</b> — no TFR shapes were drawn, and that is a data gap, not an all-clear for any flight. Use the official list: <a href="https://tfr.faa.gov/tfr2/list.html" target="_blank" rel="noopener">tfr.faa.gov — current TFR list ↗</a>.</li>';
+    subStatus('<b>TFR layer failed to load</b> — see the note above the list. Published reference only, never live authorization.');
+    var fe = document.getElementById('fresh-tfr');
+    if (fe) fe.innerHTML = '<span class="bad">● Unreachable</span><br>Last attempt ' + fmtDT(new Date());
+  });
+}
+
+/* ---------- Nuclear plant reference points ---------- */
+var NUCLEAR = [
+ ['Arkansas Nuclear One','AR',35.31,-93.23],['Beaver Valley','PA',40.62,-80.43],['Braidwood','IL',41.24,-88.23],['Browns Ferry','AL',34.70,-87.12],['Brunswick','NC',34.00,-78.01],['Byron','IL',41.99,-89.28],['Callaway','MO',38.76,-91.78],['Calvert Cliffs','MD',38.43,-76.44],['Catawba','SC',35.05,-81.07],['Clinton','IL',40.17,-88.92],['Columbia','WA',46.47,-119.33],['Comanche Peak','TX',32.30,-97.79],['Cooper','NE',40.34,-95.64],['Davis-Besse','OH',41.60,-83.09],['Diablo Canyon','CA',35.21,-120.86],['Donald C. Cook','MI',41.98,-86.56],['Farley','AL',31.22,-85.11],['Fermi','MI',41.96,-83.26],['FitzPatrick','NY',43.52,-76.60],['Ginna','NY',43.28,-77.31],['Grand Gulf','MS',32.01,-91.05],['Hatch','GA',31.93,-82.34],['Hope Creek / Salem','NJ',39.47,-75.54],['LaSalle','IL',41.24,-88.67],['Limerick','PA',40.22,-75.59],['McGuire','NC',35.43,-80.95],['Millstone','CT',41.31,-72.17],['Monticello','MN',45.33,-93.85],['Nine Mile Point','NY',43.52,-76.41],['North Anna','VA',38.06,-77.79],['Oconee','SC',34.79,-82.90],['Palo Verde','AZ',33.39,-112.86],['Peach Bottom','PA',39.76,-76.27],['Perry','OH',41.80,-81.14],['Point Beach','WI',44.28,-87.54],['Prairie Island','MN',44.62,-92.63],['River Bend','LA',30.72,-91.33],['Robinson','SC',34.40,-80.16],['Seabrook','NH',42.90,-70.85],['Sequoyah','TN',35.23,-85.09],['Shearon Harris','NC',35.63,-78.95],['South Texas','TX',28.80,-96.05],['St. Lucie','FL',27.35,-80.25],['Summer','SC',34.30,-81.32],['Surry','VA',37.17,-76.70],['Susquehanna','PA',41.09,-76.15],['Turkey Point','FL',25.44,-80.33],['Vogtle','GA',33.14,-81.76],['Waterford','LA',29.99,-90.47],['Watts Bar','TN',35.60,-84.79],['Wolf Creek','KS',38.24,-95.69]
+];
+function showNuclear(on){
+  if (on){
+    setOverlay('nuclear', { id: 'nuclear', data: { type: 'FeatureCollection', features: NUCLEAR.map(function(p){ return { type: 'Feature', properties: { name: p[0] }, geometry: { type: 'Point', coordinates: [p[3], p[2]] } }; }) },
+      layers: [{ id: 'nuclear-circle', type: 'circle', source: 'nuclear', paint: { 'circle-radius': 6, 'circle-color': '#f5a524', 'circle-stroke-color': '#0c0a13', 'circle-stroke-width': 2 } }] });
+    document.getElementById('nuclear-wrap').classList.remove('hidden');
+    subStatus('<b>' + NUCLEAR.length + ' nuclear plant reference points on the map</b> — plain dots, site-vicinity locations, <b>no plume radius modeled</b>.');
+  } else {
+    setOverlay('nuclear', null);
+    document.getElementById('nuclear-wrap').classList.add('hidden');
+  }
+}
+(function(){
+  var c = document.getElementById('nuclear-count');
+  if (c) c.textContent = NUCLEAR.length;
+  var l = document.getElementById('nuclear-list');
+  if (l) l.textContent = NUCLEAR.map(function(p){ return p[0] + ', ' + p[1]; }).join(' · ');
+})();
+
+/* ---------- grouped layer toggles ---------- */
+document.querySelectorAll('.lgroup').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var g = btn.getAttribute('data-group');
+    var on = btn.getAttribute('aria-pressed') !== 'true';
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    groups[g] = on;
+    if (g === 'airspace'){ setSub('tfr', on); }
+    else { applyMapOptions(); }
+    subStatus('<b>' + btn.textContent.trim() + '</b> layer group is now <b>' + (on ? 'ON' : 'OFF') + '</b> on the map. Feed cards are unchanged — hiding a map group never hides a report from the feed.');
+  });
+});
+function setSub(name, on){
+  subState[name] = on;
+  setSubBtn(name, on);
+  if (name === 'radar'){ ensureRasterLayers(); if (on) subStatus('<b>Radar mosaic on</b> — live NEXRAD composite via Iowa State IEM, refreshed on the 10-minute poll. Radar shows precipitation, not warnings — official alerts govern.'); }
+  else if (name === 'lightning'){
+    /* No lightning tile overlay exists anymore (see RASTER_DEFS note):
+       IEM publishes no verified GOES GLM tile layer, and the old layer
+       name returned a red “Invalid TMS Request” error image for every
+       tile. The toggle stays OFF and explains the gap honestly. */
+    subState.lightning = false;
+    setSubBtn('lightning', false);
+    var fg = document.getElementById('fresh-glm');
+    if (fg) fg.innerHTML = '<span class="bad">● Unavailable</span><br>IEM publishes no verified GLM tile layer';
+    subStatus('<b>Lightning tiles unavailable</b> — the Iowa State IEM does not publish a GOES GLM tile layer, and the layer this page used before returned an error image for every tile, so no lightning tiles are drawn. That is a data gap, not an all-clear: for lightning, check an official source such as weather.gov. Radar, SPC outlooks, and watch boxes above still work.');
+  }
+  else if (name === 'spc1' || name === 'spc2' || name === 'spc3'){ var d = parseInt(name.slice(3), 10); if (on) fetchSPC(d); else { setOverlay('spc' + d, null); subStatus('SPC Day ' + d + ' outlook off.'); } }
+  else if (name === 'watches'){ if (on) fetchWatches(); else { setOverlay('watches', null); subStatus('Watch boxes off.'); } }
+  else if (name === 'tfr'){
+    var gb = document.querySelector('[data-group="airspace"]');
+    if (gb){ gb.setAttribute('aria-pressed', on ? 'true' : 'false'); groups.airspace = on; }
+    if (on) fetchTFR(); else { setOverlay('tfr', null); document.getElementById('tfr-wrap').classList.add('hidden'); subStatus('TFRs off.'); }
+  }
+  else if (name === 'nuclear'){ showNuclear(on); }
+  else if (name === 'fema'){ groups.fema = on; applyMapOptions(); subStatus('FEMA declaration pins ' + (on ? '<b>on</b>' : '<b>off</b>') + ' the map. The emergency banner and the feed are unchanged.'); }
+}
+document.querySelectorAll('.subtoggle').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var name = btn.getAttribute('data-sub');
+    setSub(name, btn.getAttribute('aria-pressed') !== 'true');
+  });
+});
+/* Keep the extra layers on the same 10-minute rhythm as the main poll */
+setInterval(function(){
+  if (subState.spc1) fetchSPC(1);
+  if (subState.spc2) fetchSPC(2);
+  if (subState.spc3) fetchSPC(3);
+  if (subState.watches) fetchWatches();
+  if (subState.tfr) fetchTFR();
+}, 10 * 60 * 1000);
+
+/* ---------- freshness panel sync (reads the main poll's own records) ---------- */
+function syncFresh(){
+  try {
+    if (typeof nwsInfo !== 'undefined' && nwsInfo.at){
+      document.getElementById('fresh-nws').innerHTML = (nwsInfo.ok ? '<span class="ok">● Reachable</span>' : '<span class="bad">● Unreachable</span>') + '<br>Retrieved ' + fmtDT(nwsInfo.at) + '<br>' + nwsInfo.total + ' alerts nationwide · ' + nwsInfo.pinned + ' pinned';
+    }
+    if (typeof usgsInfo !== 'undefined' && usgsInfo.at){
+      document.getElementById('fresh-usgs').innerHTML = (usgsInfo.ok ? '<span class="ok">● Reachable</span>' : '<span class="bad">● Unreachable</span>') + '<br>Retrieved ' + fmtDT(usgsInfo.at) + '<br>' + usgsInfo.usCount + ' in US states/territories · ' + usgsInfo.pinned + ' pinned';
+    }
+    if (typeof femaDeclInfo !== 'undefined' && femaDeclInfo.at){
+      document.getElementById('fresh-fema').innerHTML = (femaDeclInfo.ok ? '<span class="ok">● Reachable</span>' : '<span class="bad">● Unreachable</span>') + '<br>Retrieved ' + fmtDT(femaDeclInfo.at) + '<br>' + femaDeclInfo.count + ' declaration(s), last 60 days';
+    }
+  } catch(e){}
+}
+syncFresh();
+setInterval(syncFresh, 20000);
+
+/* ---------- route planner extras: clicked dest / stops / GPX / sketch ---------- */
+function routeStatusMsg(html){ var el = document.getElementById('route-status'); if (el) el.innerHTML = html; }
+function stopsLabelUpdate(){
+  var el = document.getElementById('stops-label');
+  var stops = window.__routeStops || [];
+  el.textContent = stops.length ? 'Stops: ' + stops.map(function(s, i){ return (i + 1) + ') ' + s.lat.toFixed(4) + ', ' + s.lng.toFixed(4); }).join(' · ') : 'Stops: none — click anywhere on the map, then add that point here (up to 3).';
+}
+function useClickedAsDest(){
+  if (!clickedPoint){ routeStatusMsg('Click a spot on the map first — that point becomes the destination.'); return; }
+  window.__routeDestOverride = { lat: clickedPoint.lat, lng: clickedPoint.lng, label: 'clicked map point (' + clickedPoint.lat.toFixed(4) + ', ' + clickedPoint.lng.toFixed(4) + ')' };
+  routeStatusMsg('Destination set to the <b>clicked map point</b> (' + clickedPoint.lat.toFixed(4) + ', ' + clickedPoint.lng.toFixed(4) + '). Set a start point above if you haven\'t, then “Compute alternate routes.” Computed alternates are <b>NOT official, not guaranteed open</b>.');
+}
+function addClickedAsStop(){
+  if (!clickedPoint){ routeStatusMsg('Click a spot on the map first — that point becomes a stop.'); return; }
+  if ((window.__routeStops || []).length >= 3){ routeStatusMsg('Three stops is the limit for this planner — clear stops to start over.'); return; }
+  window.__routeStops.push({ lat: clickedPoint.lat, lng: clickedPoint.lng, label: 'stop ' + ((window.__routeStops.length) + 1) });
+  stopsLabelUpdate();
+  routeStatusMsg('Stop added: ' + clickedPoint.lat.toFixed(4) + ', ' + clickedPoint.lng.toFixed(4) + '. Compute alternate routes to route start → stop(s) → destination.');
+}
+document.getElementById('btn-point-dest').addEventListener('click', function(){
+  useClickedAsDest();
+  document.getElementById('routepanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+document.getElementById('btn-point-stop').addEventListener('click', function(){
+  addClickedAsStop();
+  document.getElementById('routepanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+document.getElementById('btn-dest-click').addEventListener('click', useClickedAsDest);
+document.getElementById('btn-stop-click').addEventListener('click', addClickedAsStop);
+document.getElementById('btn-stops-clear').addEventListener('click', function(){
+  window.__routeStops = [];
+  window.__routeDestOverride = null;
+  stopsLabelUpdate();
+  routeStatusMsg('Stops and the clicked-point destination are cleared — the destination menu above is in charge again.');
+});
+document.getElementById('route-dest').addEventListener('change', function(){ window.__routeDestOverride = null; });
+function bearingDeg(a, b){
+  var dLng = (b.lng - a.lng) * Math.PI / 180, la1 = a.lat * Math.PI / 180, la2 = b.lat * Math.PI / 180;
+  var y = Math.sin(dLng) * Math.cos(la2);
+  var x = Math.cos(la1) * Math.sin(la2) - Math.sin(la1) * Math.cos(la2) * Math.cos(dLng);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+function compass(deg){
+  var dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  return dirs[Math.round(deg / 45) % 8];
+}
+document.getElementById('btn-sketch').addEventListener('click', function(){
+  if (!routeOrigin){ routeStatusMsg('Set a start point first (ZIP or pin, above) — the sketch runs from the start through any stops to the destination.'); return; }
+  var dest = window.__routeDestOverride || destPoint(document.getElementById('route-dest').value);
+  var pts = [routeOrigin].concat(window.__routeStops || []).concat([dest]);
+  window.__sketchPoints = pts;
+  setOverlay('sketch', { id: 'sketch', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: pts.map(function(p){ return [p.lng, p.lat]; }) } },
+    layers: [{ id: 'sketch-line', type: 'line', source: 'sketch', paint: { 'line-color': '#f5a524', 'line-width': 3, 'line-dasharray': [2, 1.6], 'line-opacity': 0.95 }, layout: { 'line-cap': 'round', 'line-join': 'round' } }] });
+  var total = 0, legs = '';
+  for (var i = 0; i < pts.length - 1; i++){
+    var d = distMiles(pts[i].lat, pts[i].lng, pts[i + 1].lat, pts[i + 1].lng);
+    total += d;
+    var brg = bearingDeg(pts[i], pts[i + 1]);
+    legs += '<li><span class="swatch" style="background:#f5a524"></span><b>Leg ' + (i + 1) + '</b> — ' + (d < 10 ? d.toFixed(1) : Math.round(d)) + ' mi straight-line, heading ' + Math.round(brg) + '° (' + compass(brg) + ')</li>';
+  }
+  document.getElementById('route-list').innerHTML = legs + '<li style="border-bottom:none;font-size:13.5px">Total straight-line distance: <b>' + (total < 10 ? total.toFixed(1) : Math.round(total)) + ' mi</b>. Road distance will be longer.</li>';
+  routeStatusMsg('<b>Offline sketch drawn</b> (dashed amber) — straight lines between your points, computed on this device with no network. It is a pencil backup for orientation only: <b>not a road route, NOT official, not guaranteed open.</b> Use “Compute alternate routes” for real roads when you have a connection.');
+  document.querySelector('.mapcard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+document.getElementById('btn-gpx').addEventListener('click', function(){
+  var pts = null, name = 'shep-herd-route';
+  if (window.__lastRouteGeo && window.__lastRouteGeo.coordinates && window.__lastRouteGeo.coordinates.length){
+    pts = window.__lastRouteGeo.coordinates.map(function(c){ return { lng: c[0], lat: c[1] }; });
+    name = 'shep-herd-computed-route';
+  } else if (window.__sketchPoints && window.__sketchPoints.length > 1){
+    pts = window.__sketchPoints;
+    name = 'shep-herd-offline-sketch';
+  }
+  if (!pts){ routeStatusMsg('Nothing to export yet — compute a road route or draw the straight-line sketch first, then export the GPX.'); return; }
+  var now = new Date().toISOString();
+  var xml = '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Shep-Herd" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>' + esc(name) + '</name><time>' + now + '</time></metadata>\n<trk><name>' + esc(name) + ' — computed/sketch only, NOT an official route, not guaranteed open</name><trkseg>\n'
+    + pts.map(function(p){ return '<trkpt lat="' + p.lat.toFixed(6) + '" lon="' + p.lng.toFixed(6) + '"></trkpt>'; }).join('\n')
+    + '\n</trkseg></trk>\n</gpx>';
+  download(name + '.gpx', xml, 'application/gpx+xml');
+  routeStatusMsg('<b>GPX downloaded</b> (' + pts.length + ' points) — load it into any offline maps app. Remember: computed routes are <b>NOT official and not guaranteed open</b>; a sketch is straight lines, not roads.');
+});
+
+/* ---------- offline pack ---------- */
+(function(){
+  var sel = document.getElementById('pack-state');
+  if (!sel) return;
+  var o0 = document.createElement('option');
+  o0.value = ''; o0.textContent = 'Choose a state…';
+  sel.appendChild(o0);
+  AREA_STATES.forEach(function(s){
+    var o = document.createElement('option');
+    o.value = s[0]; o.textContent = s[1];
+    sel.appendChild(o);
+  });
+  function packData(abbr){
+    var st = areaStateByAbbr(abbr);
+    var name = st ? st[1] : abbr;
+    var snap = EVENTS.slice(0, SNAPSHOT_COUNT).filter(function(ev){ return areaStateOf(ev) === name; });
+    var live = EVENTS.slice(SNAPSHOT_COUNT).filter(function(ev){ return areaStateOf(ev) === name; });
+    var decls = [];
+    try { decls = femaLiveDecls.filter(function(d){ return d.stateAbbr === abbr; }); } catch(e){}
+    try { SNAPSHOT_DECLS.forEach(function(d){ if (d.stateAbbr === abbr) decls.push(d); }); } catch(e){}
+    return { st: st, name: name, snap: snap, live: live, decls: decls };
+  }
+  function coverageHtml(abbr){
+    var d = packData(abbr);
+    return '<b>' + esc(d.name) + ' pack — what\'s in it:</b><ul>'
+      + '<li><b>' + d.snap.length + '</b> snapshot event(s) from ' + esc(d.name) + ' (Oct 31, 2026 board, with sources)</li>'
+      + '<li><b>' + d.live.length + '</b> live pin(s) touching ' + esc(d.name) + ' at pack time (NWS / USGS / FEMA, with retrieval times)</li>'
+      + '<li><b>' + d.decls.length + '</b> federal declaration record(s) for ' + esc(d.name) + '</li>'
+      + '<li>Source-freshness times for every feed, as shown in the freshness panel</li></ul>'
+      + '<b>Coverage note — missing / partial layers (stated plainly):</b><ul>'
+      + '<li><b>Radar tiles: NOT saved.</b> Radar is a live tile service and needs a connection. <b>Lightning tiles: not available</b> — IEM publishes no verified GOES GLM tile layer, so none are drawn or saved.</li>'
+      + '<li><b>SPC outlooks &amp; watch boxes: NOT saved</b> as map layers — check weather.gov / spc.noaa.gov when connected.</li>'
+      + '<li><b>TFR boundaries: partial at best.</b> The pack does not carry TFR shapes; the official list is tfr.faa.gov.</li>'
+      + '<li><b>Flood hazard maps: NOT included.</b> Use the FEMA Flood Map Service Center (msc.fema.gov) for a property.</li>'
+      + '<li><b>Terrain relief: NOT included.</b> Elevation downloads happen per-ZIP on the live page.</li>'
+      + '<li><b>Live data goes stale.</b> Everything live in this pack is a snapshot of the moment it was built — the build time is stamped inside it. When in doubt, official sources govern.</li></ul>';
+  }
+  sel.addEventListener('change', function(){
+    var cov = document.getElementById('pack-coverage');
+    if (!sel.value){ cov.innerHTML = 'Pick a state and its coverage note appears here — including what the pack <b>cannot</b> carry.'; return; }
+    cov.innerHTML = coverageHtml(sel.value);
+  });
+  document.getElementById('btn-pack').addEventListener('click', function(){
+    var cov = document.getElementById('pack-coverage');
+    if (!sel.value){ cov.innerHTML = '<b>Pick a state first</b> — the pack is built for one state (your county\'s events ride along with its state).'; sel.focus(); return; }
+    var d = packData(sel.value);
+    cov.innerHTML = coverageHtml(sel.value);
+    var pack = {
+      pack: 'Shep-Herd offline pack', state: d.name, stateAbbr: sel.value, builtAt: new Date().toISOString(),
+      builtNote: 'Built in the browser from the Shep-Herd page\'s current data and downloaded to this device. Live items are a snapshot of build time and go stale. Missing reports are not an all-clear. Official warnings govern.',
+      freshness: {
+        nws: (typeof nwsInfo !== 'undefined' && nwsInfo.at) ? fmtDT(nwsInfo.at) : 'not retrieved yet',
+        usgs: (typeof usgsInfo !== 'undefined' && usgsInfo.at) ? fmtDT(usgsInfo.at) : 'not retrieved yet',
+        fema: (typeof femaDeclInfo !== 'undefined' && femaDeclInfo.at) ? fmtDT(femaDeclInfo.at) : 'not retrieved yet'
+      },
+      coverageMissingOrPartial: ['Radar tiles — live service, not saved', 'Lightning tiles — not available; IEM publishes no verified GOES GLM tile layer', 'SPC outlooks and watch boxes — not saved as layers', 'TFR boundaries — not carried; official list at tfr.faa.gov', 'FEMA flood hazard maps — not included; use msc.fema.gov', 'Terrain relief — not included'],
+      snapshotEvents: d.snap, liveEventsAtBuildTime: d.live, declarations: d.decls
+    };
+    download('shep-herd-offline-pack-' + sel.value + '.json', JSON.stringify(pack, null, 2), 'application/json');
+    var lines = d.snap.concat(d.live).map(function(ev){ return '[' + ev.level + ' / ' + ev.catLabel + ' / ' + ev.conf + (ev.live ? ' / LIVE' : '') + '] ' + ev.title + '\n   ' + ev.loc + ' · ' + ev.time + '\n   ' + ev.sum + '\n   Do: ' + ev.action + '\n   Source: ' + ev.src + ' — ' + ev.url; });
+    var declLines = d.decls.map(function(x){ return x.key + ': ' + x.title + ' — ' + (x.where || '') + ' · ' + (x.declaredLabel || '') + ' · ' + (x.femaUrl || ''); });
+    download('shep-herd-offline-pack-' + sel.value + '.txt',
+      'SHEP-HERD OFFLINE PACK — ' + d.name.toUpperCase() + '\nBuilt: ' + fmtDT(new Date()) + '\nLive items are a snapshot of build time and go stale. Missing reports are not an all-clear. Official warnings govern.\n\nCOVERAGE — MISSING / PARTIAL: radar tiles not saved (live service); lightning tiles not available (IEM publishes no verified GOES GLM tile layer); SPC outlooks/watch boxes not saved as layers; TFR boundaries not carried (tfr.faa.gov governs); FEMA flood maps not included (msc.fema.gov); terrain relief not included.\n\nDECLARATIONS\n' + (declLines.join('\n') || 'None for this state in current data.') + '\n\nEVENTS\n' + (lines.join('\n\n') || 'No events for this state in current data — that is a statement about this data, not an all-clear.'),
+      'text/plain');
+  });
+})();
 </script>
 </body>
 </html>
