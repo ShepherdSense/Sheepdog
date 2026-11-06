@@ -853,12 +853,261 @@ var places = EVENTS.map(function(ev){
   return { label: ev.title, locality: ev.loc.split(',')[0], region: ev.loc.split(',')[1] ? ev.loc.split(',')[1].trim() : '', lat: ev.lat, lng: ev.lng };
 });
 
+/* ---------- Camera state: the controlled view this page owns ----------
+   Root cause of the world-view snap-back, named: the bundled runtime
+   treats the map as a CONTROLLED component. Every render recomputes its
+   mapView from the options it was last given, and when the view values
+   change it jumpTo()s the camera to them. When the options carried no
+   center/zoom, that view defaulted to { center: [0, 0], zoom: 2 } — a
+   world view over the Indian Ocean — so a re-render landing AFTER a
+   correct imperative flyTo (a selectPlace notify flush, the 10-minute
+   live-feed update, a layer toggle) could snap the camera back there
+   with zero console errors. The structural defeat (B2/B3): this page
+   tracks the camera itself in camView, mapOptions() ALWAYS carries it,
+   and every camera command records its target in camView BEFORE
+   anything can re-render — so the controlled view and the imperative
+   commands can never disagree, and the [0, 0] default is never
+   reachable again. camView is kept truthful three ways: noteCamMove()
+   records every commanded target up front; a 'moveend' listener on the
+   live map (hookCamSync) syncs camView from the map's real resting
+   position, capturing user pans/zooms too; stampCamState() publishes
+   the current view for verification (B1, below). */
+var CONUS_VIEW = { lat: 39.8, lng: -98.5, zoom: 4 };
+var camView = { lat: CONUS_VIEW.lat, lng: CONUS_VIEW.lng, zoom: CONUS_VIEW.zoom };
+var camSeq = 0;
+/* Round-3 probe hardening (B1-1): the stamp a command writes names the
+   INTENDED target; only a stamp sourced 'moveend' — written by
+   syncCamFromMap() from the live map's getCenter()/getZoom() — proves
+   the rendered camera actually arrived. camFlight names the latest
+   commanded target while its flight may still be running, so a
+   'moveend' that does NOT match it (an interrupted flight's rest
+   position, fired when a newer flyTo/fitBounds stops the old ease)
+   can be told apart from the truth and ignored — see syncCamFromMap.
+   camUserTookOver is set by real user gestures (dragstart / wheel
+   zoomstart), which always win over the flight guard. camView,
+   camFlight and framedBounds are module-level page variables — NOT
+   React state — so they survive runtime remounts and map-instance
+   replacement; mountMapOnce() re-mounts with mapOptions() carrying
+   camView, and the camera resets to the initial whole-US fit only on
+   a full page reload (deliberate: a reload is a fresh visit). */
+var camFlight = null;
+var camUserTookOver = false;
+var camMode = 'fit';
+var framedBounds = null;
+
+/* The ONE accessor for the live MapLibre instance (S5): every camera
+   command, the satellite watch, the tier-zoom tracker and the raster
+   layers all resolve the map through here — mapHandle.getMap(), the
+   very instance the runtime's onMapReady stored and the state-picker /
+   GPS paths already fly. No second stored map ref exists anywhere, so
+   no command can go to a stale instance after a remount. Returns null
+   until the map is ready; every caller tolerates that (S1). */
+function liveMap(){
+  try { return (mapHandle && typeof mapHandle.getMap === 'function') ? mapHandle.getMap() : null; }
+  catch(e){ return null; }
+}
+
+/* Bounds of a place list as { w, s, e, n, count } — west/south/east/
+   north in degrees. Corners are always consumed as [lng, lat] pairs
+   (MapLibre order): fitBounds([[w, s], [e, n]]) — never [lat, lng],
+   which would put e.g. -117 in the latitude slot (invalid, clamped to
+   garbage) (S4). */
+function boundsOfPlaces(list){
+  var w = 180, s = 90, e = -180, n = -90, count = 0;
+  (list || []).forEach(function(p){
+    if (!p || typeof p.lng !== 'number' || typeof p.lat !== 'number' || !isFinite(p.lng) || !isFinite(p.lat)) return;
+    count++;
+    if (p.lng < w) w = p.lng;
+    if (p.lng > e) e = p.lng;
+    if (p.lat < s) s = p.lat;
+    if (p.lat > n) n = p.lat;
+  });
+  return count ? { w: w, s: s, e: e, n: n, count: count } : null;
+}
+function mapPixelSize(){
+  var el = document.getElementById('map');
+  var w = el ? el.clientWidth : 0, h = el ? el.clientHeight : 0;
+  return { width: w > 0 ? w : 1024, height: h > 0 ? h : 560 };
+}
+/* The center/zoom an exact fitBounds(padding 48) of b would land on,
+   computed with the same Web-Mercator math MapLibre uses — so camView
+   can name the framed view before the animation finishes (the moveend
+   sync then reconciles camView to the map's true resting values). */
+function fitViewForBounds(b, size){
+  var pad = 48;
+  var wPx = Math.max(50, size.width - pad * 2), hPx = Math.max(50, size.height - pad * 2);
+  function mercY(lat){ var r = lat * Math.PI / 180; return Math.log(Math.tan(r) + 1 / Math.cos(r)); }
+  var spanX = (b.e - b.w) / 360, spanY = (mercY(b.n) - mercY(b.s)) / (2 * Math.PI);
+  var zx = spanX > 0 ? Math.log(wPx / (256 * spanX)) / Math.LN2 : 16;
+  var zy = spanY > 0 ? Math.log(hPx / (256 * spanY)) / Math.LN2 : 16;
+  var zoom = Math.min(16, Math.max(0, Math.min(zx, zy)));
+  var midY = (mercY(b.n) + mercY(b.s)) / 2;
+  var lat = (2 * Math.atan(Math.exp(midY)) - Math.PI / 2) * 180 / Math.PI;
+  return { lng: (b.w + b.e) / 2, lat: lat, zoom: Math.round(zoom * 100) / 100 };
+}
+
+/* B1 — camera state a probe can assert WITHOUT screenshots. (In the
+   audit sandbox the basemap host is blocked, so pixels prove nothing
+   there; the old probe only proved clicks ran error-free and a card
+   showed its selected style — the broken build passed it too, because
+   the defect is purely camera movement.) After every camera command
+   and every map moveend, the current view is published three ways:
+   window.__sheepdogCam = { center: [lng, lat], zoom, source, at };
+   data-cam-center ("lng,lat") / data-cam-zoom / data-cam-source
+   attributes on the #map element; and a console.info('[sheepdog-cam]')
+   line. Asserting a fly-to is then just reading those values — with
+   one discipline (B1-1): a command stamp (source 'fly-to' / 'whole-us'
+   / …) only proves INTENT. A verified arrival requires a LATER stamp
+   with source 'moveend' — written by syncCamFromMap() from the live
+   map's real getCenter()/getZoom() — whose `at` is past the command
+   stamp's `at` and whose center/zoom equal the target. A swallowed
+   flyTo produces no moveend and therefore can never pass that check. */
+function stampCamState(source){
+  try {
+    var view = { center: [camView.lng, camView.lat], zoom: Math.round(camView.zoom * 100) / 100, source: source, at: new Date().toISOString() };
+    window.__sheepdogCam = view;
+    var el = document.getElementById('map');
+    if (el){
+      el.setAttribute('data-cam-center', view.center[0].toFixed(4) + ',' + view.center[1].toFixed(4));
+      el.setAttribute('data-cam-zoom', String(view.zoom));
+      el.setAttribute('data-cam-source', source);
+    }
+    if (window.console && typeof console.info === 'function') console.info('[sheepdog-cam] center=[' + view.center[0].toFixed(4) + ', ' + view.center[1].toFixed(4) + '] zoom=' + view.zoom + ' (' + source + ')');
+  } catch(e){}
+}
+/* Record a commanded camera target in the controlled view. Runs BEFORE
+   the imperative command and before any selectPlace notify can flush,
+   so a later re-render re-applies THIS view (B2/B3). */
+function noteCamMove(lat, lng, zoom, source){
+  camView = { lat: lat, lng: lng, zoom: zoom };
+  camSeq++;
+  camFlight = { lat: lat, lng: lng, zoom: zoom, until: Date.now() + 8000 };
+  camUserTookOver = false;
+  stampCamState(source);
+}
+/* Sync camView from the map's ACTUAL resting position — getCenter() /
+   getZoom() on the live instance, never a re-stamp of the commanded
+   camView (B1-1). Called from the 'moveend' listener with source
+   'moveend', so a probe can distinguish a rendered arrival (source
+   'moveend', `at` later than the command stamp) from a mere command.
+   Flight guard (rapid successive commands): while a commanded flight
+   may still be running, a moveend whose resting position does NOT
+   match the flight's target is an interrupted flight coming to rest
+   (MapLibre fires moveend for the stopped ease when a newer flyTo /
+   fitBounds supersedes it, and when the runtime's jumpTo lands) — it
+   must not overwrite camView with that intermediate position, or the
+   next update() would snap the camera back to it. A real user gesture
+   (dragstart / wheel zoomstart sets camUserTookOver) always syncs:
+   the visitor's own resting place is the truth. */
+function syncCamFromMap(source){
+  var m = liveMap();
+  if (!m) return;
+  try {
+    if (typeof m.getCenter !== 'function' || typeof m.getZoom !== 'function') return;
+    var c = m.getCenter();
+    if (!c || typeof c.lat !== 'number' || typeof c.lng !== 'number') return;
+    var z = m.getZoom();
+    if (camFlight && !camUserTookOver && Date.now() < camFlight.until){
+      var offTarget = Math.abs(c.lng - camFlight.lng) > 0.02 || Math.abs(c.lat - camFlight.lat) > 0.02 || Math.abs(z - camFlight.zoom) > 0.15;
+      if (offTarget) return;
+      camFlight = null;
+    }
+    camView = { lat: c.lat, lng: c.lng, zoom: z };
+    stampCamState(source || 'moveend');
+  } catch(e){}
+}
+var camHookedMap = null;
+var camMoveEndHandler = null;
+var camDragStartHandler = null;
+var camZoomStartHandler = null;
+function hookCamSync(){
+  var m = liveMap();
+  if (!m || typeof m.on !== 'function') return;
+  if (camHookedMap === m) return;
+  /* Listener lifecycle (B2-2): exactly one handler set per map
+     instance. When the instance is replaced (the applyMapOptions
+     remount path), the previous set is removed from the old instance
+     FIRST — handlers never accumulate, and no stale closure can fire
+     later and overwrite camView with a dead map's position. */
+  if (camHookedMap){
+    try {
+      if (typeof camHookedMap.off === 'function'){
+        if (camMoveEndHandler) camHookedMap.off('moveend', camMoveEndHandler);
+        if (camDragStartHandler) camHookedMap.off('dragstart', camDragStartHandler);
+        if (camZoomStartHandler) camHookedMap.off('zoomstart', camZoomStartHandler);
+      }
+    } catch(e){}
+    camHookedMap = null;
+    camMoveEndHandler = null;
+    camDragStartHandler = null;
+    camZoomStartHandler = null;
+  }
+  /* Attach ONLY — deliberately no immediate sync here. This hook often
+     runs in the middle of a camera command (centerMapOn hooks right
+     before flyTo); syncing from the map's pre-flight position at that
+     moment would clobber the just-recorded target in camView and hand
+     the NEXT update() a stale view to jump back to — the exact
+     snap-back this block exists to defeat. The 'moveend' listener
+     keeps camView truthful from the moment the camera comes to rest,
+     reading the live position and stamping source 'moveend' (B1-1). */
+  camMoveEndHandler = function(){ syncCamFromMap('moveend'); };
+  camDragStartHandler = function(){ camUserTookOver = true; };
+  camZoomStartHandler = function(e){ if (e && e.originalEvent) camUserTookOver = true; };
+  try {
+    m.on('moveend', camMoveEndHandler);
+    m.on('dragstart', camDragStartHandler);
+    m.on('zoomstart', camZoomStartHandler);
+  } catch(e){}
+  camHookedMap = m;
+}
+/* After an animated camera command, push the (by then moveend-synced)
+   view into the runtime options once more, so the stored controlled
+   view matches the resting camera even if no other update happens.
+   Superseded if a newer camera command lands first. */
+function deferCamPush(){
+  var seq = camSeq;
+  setTimeout(function(){
+    if (seq !== camSeq) return;
+    try { applyMapOptions(); } catch(e){}
+  }, 800);
+}
+/* Initial view: the same whole-US fit of all current places the runtime
+   used to apply once at mount — now owned by camView from the start,
+   so the map opens framed on the pins and the controlled view is never
+   the [0, 0] / zoom-2 default, not even for the first update(). */
+(function(){
+  var b = boundsOfPlaces(places);
+  if (b && b.count >= 2){
+    var fit = fitViewForBounds(b, mapPixelSize());
+    camView = { lat: fit.lat, lng: fit.lng, zoom: fit.zoom };
+    framedBounds = b;
+  }
+  stampCamState('init');
+})();
+
 function selectEvent(i, fromCard){
   selected = i;
   var ev = EVENTS[i];
   rows.forEach(function(r, j){ r.classList.toggle('map-selected', j === i); });
-  if (mapHandle && !fromCard) { /* map already shows it */ }
-  if (mapHandle && fromCard) { try { mapHandle.selectPlace(i); } catch(e){} }
+  if (mapHandle && fromCard) {
+    /* Camera FIRST, pin highlight SECOND — the order is load-bearing
+       (B2). selectPlace() only highlights the pin: it stores the index
+       and notifies React, and that notify re-renders the runtime with
+       the options from the last update(). If the flush landed after an
+       imperative flyTo while the stored options still named an older
+       view, the runtime's controlled-mapView effect would jumpTo() back
+       to that older view and silently undo the flight. centerMapOn()
+       therefore runs first: it records this pin in camView AND pushes
+       fresh options carrying that view before flying, so when
+       selectPlace's notify flush re-renders, the controlled mapView it
+       re-applies IS this pin's view — the flush can no longer undo it.
+       Index note (S4): cards, rows, places and EVENTS are all built in
+       the same loop order (the initial build above and rebuildBoard()),
+       so index i addresses the same event in every array — Tier 1 and
+       Tier 2 cards alike; no filtered list is involved in this path. */
+    centerMapOn(ev.lat, ev.lng);
+    try { mapHandle.selectPlace(i); } catch(e){}
+  }
   var dirUrl = null, searchUrl = null;
   try { searchUrl = MapHelpers.mapsSearchUrl(places[i]); } catch(e){}
   try { dirUrl = MapHelpers.mapsDirectionsUrl(places[i]); } catch(e){}
@@ -916,6 +1165,17 @@ var requestedStyle = 'dark';
 function mapOptions(style){
   return {
     places: places,
+    /* B3: the controlled view ALWAYS travels with the options. The
+       runtime derives its mapView from these two fields on every render
+       (center is an object with lat/lng, converted to [lng, lat]
+       internally) — carrying camView here is what stops any later
+       update() (the 10-minute live-feed poll, a layer toggle, an area
+       render) from re-applying the runtime's [0, 0] / zoom-2 default
+       and snapping the camera back to the world view. camView itself is
+       updated by every camera command and synced from the map on every
+       moveend — see the camera-state block above. */
+    center: { lat: camView.lat, lng: camView.lng },
+    zoom: camView.zoom,
     baseStyle: style,
     overlays: currentOverlays.length ? currentOverlays : undefined,
     marker: function(place, index, isSel){
@@ -978,6 +1238,7 @@ function mountMapOnce(){
 function applyMapOptions(){
   if (!mapHandle){ mountMapOnce(); return; }
   if (typeof mapHandle.update === 'function'){
+    hookCamSync();
     try { mapHandle.update(fullMapOptions(currentStyle)); return; }
     catch(e){ /* fall through to the clean remount below */ }
   }
@@ -1031,8 +1292,7 @@ function startSatelliteWatch(){
   watch.timer = setInterval(function(){
     if (satWatch !== watch) return;
     watch.ticks++;
-    var m = null;
-    try { m = (mapHandle && typeof mapHandle.getMap === 'function') ? mapHandle.getMap() : null; } catch(e){}
+    var m = liveMap();
     if (m && watch.map !== m){
       watch.map = m;
       watch.onData = function(e){
@@ -1174,6 +1434,12 @@ function showWholeUS(){
   userArea = null;
   renderArea();
   applyMapOptions();
+  /* applyMapOptions()/update() re-renders pins, basemap and overlays and
+     re-applies the tracked camView — it never re-frames to the national
+     view on its own. The button therefore commands the live map instance
+     directly via frameWholeUS(), which also records the framed view in
+     camView so later updates keep agreeing with it. */
+  frameWholeUS();
 }
 document.getElementById('btn-all').addEventListener('click', showWholeUS);
 
@@ -1207,12 +1473,121 @@ function areaLabel(a){
   return bits.length ? bits.join(', ') : 'Your location';
 }
 function centerMapOn(lat, lng){
+  /* Record the target in the controlled view and push it BEFORE flying
+     (B2/B3): noteCamMove() updates camView, applyMapOptions() hands the
+     runtime fresh options carrying that view, so any re-render from
+     here on — selectPlace's notify flush, the 10-minute live poll, a
+     layer toggle — re-applies THIS view instead of the [0, 0] / zoom-2
+     default. The imperative flyTo then animates to the same target the
+     controlled view already names, so the two can never fight. If the
+     map is not ready yet (liveMap() null — S1), nothing throws: camView
+     still holds the target and the next update() / mount applies it.
+     flyTo center is [lng, lat] (MapLibre order), so Spangle, WA
+     (lat 47.43, lng -117.38) lands in Washington at zoom 8. If no live
+     map instance exists yet, the stamp says 'fly-to-pending' (S1):
+     camView still carries the target into the next mount/update, but
+     the page never claims a move that has not happened. */
+  camMode = 'pin';
+  noteCamMove(lat, lng, 8, liveMap() ? 'fly-to' : 'fly-to-pending');
+  try { applyMapOptions(); } catch(e){}
+  hookCamSync();
+  var m = liveMap();
   try {
-    var m = (mapHandle && typeof mapHandle.getMap === 'function') ? mapHandle.getMap() : null;
     if (m && typeof m.flyTo === 'function'){ m.flyTo({ center: [lng, lat], zoom: 8, essential: true }); return true; }
     if (m && typeof m.easeTo === 'function'){ m.easeTo({ center: [lng, lat], zoom: 8 }); return true; }
   } catch(e){}
   return false;
+}
+/* Frame the whole US on the live map instance — the same fit the runtime
+   applies once at mount (bounds of the pins, padding 48, maxZoom 16),
+   re-issued on demand, and recorded in camView like every other camera
+   move so the controlled view agrees with it (B3).
+   Bounds (S3): computed from ALL places — snapshot pins and live pins
+   alike — so the national frame never crops a pin. (The previous code
+   sliced places to SNAPSHOT_COUNT on the assumption that the snapshot
+   is always a prefix of places; framing from the full array makes that
+   assumption unnecessary.)
+   Corner order (S4): fitBounds takes [[west, south], [east, north]] —
+   [lng, lat] pairs. A [lat, lng] corner would put a longitude such as
+   -117 in the latitude slot (invalid, clamped) and frame garbage; the
+   boundsOfPlaces() helper keeps the components named w/s/e/n so the
+   order is explicit at this call site. */
+function frameWholeUS(){
+  var m = liveMap();
+  hookCamSync();
+  camMode = 'fit';
+  var b = boundsOfPlaces(places);
+  /* Degenerate-bounds guard (S2): count alone is not enough. Bounds
+     are usable only with real area — width AND height above a
+     near-identical epsilon — because two identical (or effectively
+     identical) points fitBounds'd would dive to maxZoom street level,
+     not a whole-US frame. Invalid coordinates never reach here:
+     boundsOfPlaces() already drops non-finite lat/lng before counting. */
+  var usable = !!(b && b.count >= 2 && isFinite(b.w) && isFinite(b.s) && isFinite(b.e) && isFinite(b.n) && (b.e - b.w) > 0.0001 && (b.n - b.s) > 0.0001);
+  if (!m){
+    /* Null-map path (S1): no live instance yet (button clicked before
+       onMapReady). Record the intended frame in camView — the fit of
+       the pins when the bounds are usable, CONUS otherwise — so
+       mapOptions() carries it into the mount / first update, but stamp
+       it 'whole-us-pending': no move has happened and no moveend will
+       ever arrive to correct the record, so the stamp must not claim
+       one. framedBounds still advances, so S3's out-of-frame check
+       compares against the frame the map WILL open on. */
+    if (usable){
+      var pf = fitViewForBounds(b, mapPixelSize());
+      framedBounds = b;
+      noteCamMove(pf.lat, pf.lng, pf.zoom, 'whole-us-pending');
+    } else {
+      noteCamMove(CONUS_VIEW.lat, CONUS_VIEW.lng, CONUS_VIEW.zoom, 'whole-us-pending');
+    }
+    deferCamPush();
+    return false;
+  }
+  if (usable && typeof m.fitBounds === 'function'){
+    var fit = fitViewForBounds(b, mapPixelSize());
+    framedBounds = b;
+    noteCamMove(fit.lat, fit.lng, fit.zoom, 'whole-us');
+    try {
+      m.fitBounds([[b.w, b.s], [b.e, b.n]], { padding: 48, maxZoom: 16, duration: 600, essential: true });
+      deferCamPush();
+      return true;
+    } catch(e){ /* fitBounds threw — fall through to the CONUS fallback */ }
+  }
+  /* CONUS fallback — a live map exists here (the null-map case is the
+     'whole-us-pending' branch above, S1). Triggers (S2): fewer than 2
+     usable places — an empty list has nothing to frame, and a single
+     place fitBounds'd at maxZoom 16 would dive to street level, which
+     is not a "whole US" view — OR degenerate zero-area bounds (see the
+     usable check above), OR fitBounds missing/threw. The view is
+     recorded in camView first, so mapOptions() agrees with the
+     imperative flyTo/easeTo that follows. */
+  noteCamMove(CONUS_VIEW.lat, CONUS_VIEW.lng, CONUS_VIEW.zoom, 'whole-us-fallback');
+  deferCamPush();
+  try {
+    if (m && typeof m.flyTo === 'function'){ m.flyTo({ center: [CONUS_VIEW.lng, CONUS_VIEW.lat], zoom: CONUS_VIEW.zoom, essential: true }); return true; }
+    if (m && typeof m.easeTo === 'function'){ m.easeTo({ center: [CONUS_VIEW.lng, CONUS_VIEW.lat], zoom: CONUS_VIEW.zoom }); return true; }
+  } catch(e){}
+  return false;
+}
+/* S3 — late-arriving live places: the initial fit frames the snapshot
+   pins; when a live refresh adds a place OUTSIDE that frame (an Alaska
+   quake, a Hawaii alert), the national view would silently crop it.
+   When the camera is in a framing mode (initial fit / whole-US — not
+   while the visitor is reading a pin they picked), re-frame so every
+   pin is inside the picture. framedBounds tracks the last frame this
+   page commanded; frameWholeUS() recomputes from the full places list,
+   so the re-frame is exact, and it only fires on an actual out-of-frame
+   arrival — an in-frame refresh changes nothing. */
+function maybeReframeForPlaces(){
+  if (camMode !== 'fit' || !framedBounds) return;
+  for (var i = 0; i < places.length; i++){
+    var p = places[i];
+    if (!p || typeof p.lat !== 'number' || typeof p.lng !== 'number' || !isFinite(p.lat) || !isFinite(p.lng)) continue;
+    if (p.lng < framedBounds.w || p.lng > framedBounds.e || p.lat < framedBounds.s || p.lat > framedBounds.n){
+      frameWholeUS();
+      return;
+    }
+  }
 }
 function nearestEvents(n){
   if (!userArea) return [];
@@ -1821,6 +2196,9 @@ function rebuildBoard(){
   applyFilter();
   updateStats();
   applyMapOptions();
+  /* S3: if this refresh brought a live place outside the frame the map
+     opened on, re-frame (framing mode only — never yank a pin view). */
+  try { maybeReframeForPlaces(); } catch(e){}
 }
 
 /* ----- NWS ----- */
@@ -2561,7 +2939,7 @@ window.__pinHidden = function(ev){
   var lastZoomRevealed = false;
   setInterval(function(){
     try {
-      var m = (typeof mapHandle !== 'undefined' && mapHandle && typeof mapHandle.getMap === 'function') ? mapHandle.getMap() : null;
+      var m = (typeof liveMap === 'function') ? liveMap() : null;
       if (!m || typeof m.getZoom !== 'function') return;
       var revealed = m.getZoom() >= 6;
       window.__tierZoomRevealed = revealed;
@@ -2606,7 +2984,8 @@ function setSubBtn(name, on){
      There is no verified GLM tile layer to point at, so no lightning
      tiles are drawn; the toggle now explains the gap instead. */
 function getMapSafe(){
-  try { return (mapHandle && typeof mapHandle.getMap === 'function') ? mapHandle.getMap() : null; } catch(e){ return null; }
+  /* Same single accessor as every camera command (S5) — see liveMap(). */
+  try { return (typeof liveMap === 'function') ? liveMap() : null; } catch(e){ return null; }
 }
 var RASTER_DEFS = {
   radar:     { src: 'shep-radar-src', layer: 'shep-radar-layer', opacity: 0.55, maxzoom: 18,
