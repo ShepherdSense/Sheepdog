@@ -1,0 +1,21 @@
+name: Publish Sheepdog Nov 9
+on:
+  push:
+    branches: [main]
+    paths:
+      - interactive-us-local-events-map.html
+      - .github/workflows/publish-sheepdog-nov9.yml
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swap temp build into index.html
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git mv -f interactive-us-local-events-map.html index.html
+          git commit -m "Publish Sheepdog Nov 9 morning sweep (35 pins)"
+          git push
