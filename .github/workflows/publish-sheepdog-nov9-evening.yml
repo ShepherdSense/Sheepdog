@@ -1,0 +1,19 @@
+name: Publish Sheepdog Nov 9 evening
+on:
+  push:
+    branches: [main]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swap temp build into index.html
+        run: |
+          if [ ! -f interactive-us-local-events-map.html ]; then echo "Temp file already moved; nothing to do."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git mv -f interactive-us-local-events-map.html index.html
+          git commit -m "Publish Sheepdog Nov 9 evening sweep (39 pins)"
+          git push
