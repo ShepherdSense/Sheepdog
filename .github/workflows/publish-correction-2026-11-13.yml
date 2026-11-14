@@ -6,6 +6,9 @@ on:
       - '.github/workflows/publish-correction-2026-11-13.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
