@@ -1,0 +1,21 @@
+name: Publish addendum 2026-11-13
+
+on:
+  push:
+    paths:
+      - .github/workflows/publish-addendum-2026-11-13.yml
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace index.html with updated evening edition
+        run: |
+          git config user.name ShepherdSense
+          git config user.email shepherdsense@users.noreply.github.com
+          git mv -f sheepdog-evening-2026-11-13.html index.html
+          git commit -m "Publish updated Sheepdog evening edition for Nov 13, 2026 (108 pins)"
+          git push
