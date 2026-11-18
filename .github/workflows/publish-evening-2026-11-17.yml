@@ -1,0 +1,26 @@
+name: Publish Sheepdog Nov 17 evening
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish evening edition as index.html
+        run: |
+          git config user.name "ShepherdSense"
+          git config user.email "shepherdsense@users.noreply.github.com"
+          if [ -f sheepdog-evening-2026-11-17.html ]; then
+            git mv -f sheepdog-evening-2026-11-17.html index.html
+          else
+            git mv -f interactive-us-local-events-map.html index.html
+          fi
+          git commit -m "Publish Sheepdog Nov 17 evening"
+          git push
