@@ -1,0 +1,14 @@
+name: Publish Sheepdog morning Nov 21
+on:
+  push:
+    paths:
+      - .github/workflows/publish-sheepdog-morning-nov21.yml
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rename morning edition to index.html
+        run: 'git config user.name "github-actions"; git config user.email "github-actions[bot]@users.noreply.github.com"; git mv -f interactive-us-local-events-map.html index.html; git commit -m "Sheepdog morning edition Nov 21"; git push'
