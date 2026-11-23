@@ -9,4 +9,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: git mv -f interactive-us-local-events-map.html index.html
-      - run: git config user.name "ShepherdSense" && git config user.email "thedracospark@gmail.com" && git commit -m "Sheepdog evening edition Nov 22: 287 pins" && git push
+      - run: 'git config user.name "ShepherdSense" && git config user.email "thedracospark@gmail.com" && git commit -m "Sheepdog evening edition Nov 22: 287 pins" && git push'
