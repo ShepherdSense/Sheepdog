@@ -12,4 +12,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Rename map to index.html and publish
-        run: 'git mv -f interactive-us-local-events-map.html index.html && git add -A && git commit -m "Sheepdog morning edition Nov 25: 335 pins" && git push'
+        run: 'git config user.name "github-actions[bot]" && git config user.email "github-actions[bot]@users.noreply.github.com" && git mv -f interactive-us-local-events-map.html index.html && git add -A && git commit -m "Sheepdog morning edition Nov 25: 335 pins" && git push'
