@@ -1,0 +1,14 @@
+name: Publish evening edition
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: 'git config user.name "github-actions[bot]" && git config user.email "github-actions[bot]@users.noreply.github.com" && git mv -f interactive-us-local-events-map.html index.html && git add -A && git commit -m "Sheepdog evening edition Nov 24: 324 pins" && git push'
