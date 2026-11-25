@@ -1,0 +1,15 @@
+name: Publish morning edition
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rename map to index.html and publish
+        run: 'git mv -f interactive-us-local-events-map.html index.html && git add -A && git commit -m "Sheepdog morning edition Nov 25: 335 pins" && git push'
