@@ -1,0 +1,14 @@
+name: Publish morning 2026-11-26
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: 'git config user.name "ShepherdSense" && git config user.email "shepherdsense@example.com" && git mv -f interactive-us-local-events-map.html index.html && git commit -m "Sheepdog morning edition Nov 26: 364 pins" && git push'
