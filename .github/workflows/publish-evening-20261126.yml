@@ -1,0 +1,17 @@
+name: Publish evening edition 20261126
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set git identity
+        run: git config user.name "ShepherdSense" && git config user.email "shepherdsense@users.noreply.github.com"
+      - name: Publish evening edition
+        run: 'if [ -f interactive-us-local-events-map.html ]; then git mv -f interactive-us-local-events-map.html index.html; else git mv -f interactive-us-local-events-map*.html index.html; fi; git add index.html; git commit -m "Sheepdog evening edition Nov 26: 374 pins"; git push'
