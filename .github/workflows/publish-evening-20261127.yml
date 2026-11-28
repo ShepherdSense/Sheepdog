@@ -1,0 +1,25 @@
+name: Publish evening edition Nov 27
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure git identity
+        run: |
+          git config user.name "ShepherdSense"
+          git config user.email "ShepherdSense@users.noreply.github.com"
+      - name: Move uploaded file into place
+        run: |
+          git mv -f interactive-us-local-events-map.html index.html
+          git status --short
+      - name: Commit evening edition
+        run: 'git commit -m "Sheepdog evening edition Nov 27: 399 pins"'
+      - name: Push
+        run: git push
