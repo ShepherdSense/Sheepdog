@@ -1,0 +1,30 @@
+name: Publish morning edition Nov 28
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish morning edition
+        run: |
+          git config user.name "ShepherdSense"
+          git config user.email "shepherdsense@users.noreply.github.com"
+          if [ -f interactive-us-local-events-map.html ]; then
+            git mv -f interactive-us-local-events-map.html index.html
+          else
+            for f in *.html; do
+              if [ "$f" != "index.html" ]; then
+                git mv -f "$f" index.html
+                break
+              fi
+            done
+          fi
+          git add -A
+          git commit -m 'Sheepdog morning edition Nov 28: 420 pins' || exit 0
+          git push
